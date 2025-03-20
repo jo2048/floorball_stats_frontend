@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./switch.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="shortcut icon" href="#">
+  <title>Belgian floorball statistics</title>
+</head>
+
+<body>
+  <header>
+    <h1>Belgian floorball statistics</h1>
+    <h2></h2>
+  </header>
+
+  <div id="left">
+    <h3>Menu</h3>
+    <ul>
+      <li><a href="#">Welcome</a></li>
+      <li><a href="#addPlayersDiv">Add players to pool</a></li>
+      <li><a href="#selectPlayersDiv">Polytope view</a></li>
+      <li><a href="#chartsDiv">Graphs selection</a></li>
+    </ul>
+    <span class="badge badge-primary">Test badge
+      <i class="fa fa-times-circle" style="cursor: pointer;"></i> 
+    </span>
+
+  </div>
+
+  <main>
+    <div id="add-players-div">
+      <h3>Select players</h3>
+      <form>
+        <label for="search-player-input">Player name</label>
+        <input type="search" id="search-player-input" name="search-player-input" required="true" minlength="3" maxlength="15" size="15" placeholder="Doe John" pattern="[a-zA-Z \-]+"></input>
+        <button id="search-player-button" type="submit"><i class="fa fa-search"></i></button>
+      </form>
+      <br/>
+    </div>
+
+    <div id="players-pool-div">
+      <h3>Players pool</h3>
+      <div id="selected-players-labels"/>
+      </div>
+      <div>
+        <button id="player-pool-select-all-button">Select all</button>
+        <button id="player-pool-unselect-all-button">Unselect all</button>
+        <button id="player-pool-remove-unselected-button">Remove all unselected players</button>
+        <button id="create-chart-button">Create chart for selected players</button>
+      </div>
+    </div>
+
+    <div id="chartsDiv">
+      <div class="chart-container">
+        <fieldset>
+          <legend>Chart parameters</legend>
+          <div>
+            <input type="radio" id="ratio" name="ratio" value="ratio" checked />
+            <label for="ratio">Ratio</label>
+          </div>
+        
+          <div>
+            <input type="radio" id="dewey" name="drone" value="dewey" />
+            <label for="dewey">Dewey</label>
+          </div>
+          <div>
+            <input type="checkbox" id="display-games-count" name="test" checked />
+            <label for="display-games-count">Total games played</label>
+          </div>        
+          <div>
+            <input type="checkbox" id="display-goals-count" name="horns" checked />
+            <label for="display-goals-count">Goals</label>
+          </div>
+          <div>
+            <input type="checkbox" id="display-assists-count" name="horns" checked />
+            <label for="display-assists-count">Assists</label>
+          </div>
+          <div>
+            <input type="checkbox" id="display-faults-count" name="horns" checked />
+            <label for="display-faults-count">Faults</label>
+          </div>
+          <div>
+            <label>Select season</label>
+            <select name="seasons" id="seasonSelect"></select>
+          </div>
+          <div>
+            <label>Filter on</label>
+          </div>
+          <div>
+            <label>Group by</label>
+            <select name="groupBy" id="groupBySelect">
+              <option value="Season">Season</option>
+              <option value="Competition">Competition</option>
+            </select>
+          </div>
+        </fieldset>        
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="chart-container">
+          <fieldset>
+          <legend>Chart parameters</legend>
+          <div>
+            <input type="radio" id="ratio" name="ratio" value="ratio" checked />
+            <label for="ratio">Ratio</label>
+          </div>
+        </fieldset>     
+        <canvas id="myChart2"></canvas>
+      </div>
+    </div>
+    
+    
+
+  </main>
+
+  <footer>
+
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="./main.js" type="module"></script>
+</body>
+
+</html>

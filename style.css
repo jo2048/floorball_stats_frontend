@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&display=swap');
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background-color: lightgray;
+  margin: 0 auto;
+  width: 90%;
+  position: relative;
+  /*max-width: 1280px;*/
+}
+
+
+.chart-container {
+  position: relative;
+  /* width: 1000px; */
+}
+
+input:invalid {
+  border: 5px dashed red;
+}
+
+
+#add-players-div, #players-pool-div {
+  background-color: white;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
+}
+
+
+#left {
+  background-color: #ddeeff;
+  border: 1px solid #aaccee;
+  margin: 10px 15px;
+  padding: 0px 10px;
+  top: 0px;
+  left: 0px;
+  width: 240px;
+}
+
+.player-pool-span {
+  background-color: gray;
+  padding: 5px;
+  border: solid 2px;
+  margin: 5px;
+  border-radius: 10px;
+  /* white-space: nowrap; */
+}
+
+.player-pool-span[state="selected"] {
+  background-color: greenyellow;
+}
+
+.chart-container {
+  background-color: white;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
+}
+
+.inter{
+  height: 10px;
+}
+
+label, footer {
+    font-family: sans-serif;
+}
+
+label {
+    font-size: 1rem;
+}
+
+select {
+    font-size: .9rem;
+    padding: 2px 5px;
+}
+
+footer {
+    font-size: .8rem;
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+}
+
+span {
+  box-sizing: border-box;
+}
+
+/* Style the search field */
+form input[type=search] {
+  /* padding: 10px; */
+  /* font-size: 17px; */
+  border: 1px solid grey;
+  float: left;
+  /* width: 80%; */
+  background: #f1f1f1;
+}
+
+/* Style the submit button */
+form button {
+  float: left;
+  /* padding: 10px; */
+  background: #2196F3;
+  color: white;
+  /* font-size: 17px; */
+  border: 1px solid grey;
+  border-left: none; /* Prevent double borders */
+  cursor: pointer;
+}
+
+form button:hover {
+  background: #0b7dda;
+}
+
+/* Clear floats */
+form ::after {
+  content: "";
+  clear: both;
+  display: table;
+}
