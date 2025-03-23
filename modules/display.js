@@ -25,8 +25,9 @@ class ChartContainer {
     this.id = ChartContainer.#getNextId()
     this.parent = parent
     this.players = players
-    this.groupBy = "Player" 
-    this.playersStats = null
+    this.groupBy = "Player"
+    this.playersGames = null
+    this.title = this.players.length == 1 ? "Stats " + this.players[0].getNameFormatted() : null
     this.init()
   }
 
@@ -108,23 +109,23 @@ class ChartContainer {
           //   </select>
           // </div>
 
-  async #getPlayerStats() {
+  async #getPlayersStats() {
     if (this.playersStats == null) {
-      const playerGames = await Promise.all(this.players.map(async p => (await GameCollection.loadPlayerGameCollection(p))))
-      this.playersStats = playerGames.map(gc => [gc.player, gc.computeStats()])
+      const playersGames = await Promise.all(this.players.map(async p => (await GameCollection.loadPlayerGameCollection(p))))
+      this.playersStats = this.players.length == 1 
+        ? playersGames[0].getStatsGroupedBy("SEASON")
+        : playersGames.map(gc => [gc.player, gc.computeStats()]);
     }
     return this.playersStats
   }
 
   async display() {
-    var title = "Stats by player"
     var wonTieLost = false
     var statsToDisplay = []
     document.getElementById(`games-played-checkbox-${this.id}`).disabled = false
     if (document.getElementById(`stats-btn-${this.id}`).checked) {
       this.div.querySelector("div[class='checkbox-group']").removeAttribute("style")
       document.getElementById(`games-played-span-${this.id}`).removeAttribute("style")
-      statsToDisplay = []
       if (document.getElementById(`games-played-checkbox-${this.id}`).checked)
         statsToDisplay.push("Games played")
       if (document.getElementById(`goals-checkbox-${this.id}`).checked)
@@ -136,7 +137,6 @@ class ChartContainer {
     } else if (document.getElementById(`stats-ratios-btn-${this.id}`).checked) {
       this.div.querySelector("div[class='checkbox-group']").removeAttribute("style")
       document.getElementById(`games-played-span-${this.id}`).style.display = "none"
-      statsToDisplay = []
       if (document.getElementById(`goals-checkbox-${this.id}`).checked)
         statsToDisplay.push("Goals by match")
       if (document.getElementById(`assists-checkbox-${this.id}`).checked)
@@ -145,18 +145,20 @@ class ChartContainer {
         statsToDisplay.push("Faults by match")
     } else {
       this.div.querySelector("div[class='checkbox-group']").style.display = "none"
-      title = "Won, tie, lost by player"
       wonTieLost = true
       statsToDisplay = ["Won", "Tie", "Lost"]
     }
 
-    const playersStats = await this.#getPlayerStats()
-    const sortedPlayers = playersStats.sort((a1, a2) => a1[1].games_played - a2[1].games_played)
+    const playersStats = await this.#getPlayersStats()
+    
+    const sortedStats = this.players.length != 1
+      ? playersStats.sort((a1, a2) => a1[1].games_played - a2[1].games_played)
+      : playersStats.sort((a1, a2) => a1[1].startDate - a2[1].startDate)
 
-    const chartInput = new ChartInput(
-      title,
-      sortedPlayers.map(([p, _]) => p.getNameFormatted()),
-      Object.fromEntries(statsToDisplay.map(statType => [statType, sortedPlayers.map(([_, stats]) => statFunctions[statType](stats))]))      
+    
+    var chartInput = new ChartInput(
+      sortedStats.map(([p, _]) => p.getNameFormatted()),
+      Object.fromEntries(statsToDisplay.map(statType => [statType, sortedStats.map(([_, stats]) => statFunctions[statType](stats))]))
     )
 
     this.chart.data = {
@@ -165,39 +167,19 @@ class ChartContainer {
     }
 
     if(wonTieLost) 
-      this.chart.options = stackedBarChartOptions
+      this.chart.options = getStackedBarChartOptions(this.title);
     else
-      this.chart.options = groupedBarChartOptions
+      this.chart.options = getGroupedBarChartOptions(this.title);
 
     this.chart.update()
   }
 
 }
 
-
-const plugins = {
-  legend: {
-    display: true,
-  },
-  datalabels: {
-    anchor: "center", // Position of the labels (start, end, center, etc.)
-    align: "center", // Alignment of the labels (start, end, center, etc.)
-    // color: 'blue', // Color of the labels
-    // font: {
-    //     weight: 'bold',
-    // },
-    formatter: function (value, context) {
-      return value == 0 ? "" : value; // Display the actual data value
-    },
-  },
-};
-
-
 class ChartInput {
-  constructor(title, x_labels, stats) {
-    if (!title || !x_labels || !stats)
+  constructor(x_labels, stats) {
+    if (!x_labels || !stats)
       throw new Error("Invalid arguments for ChartInput")
-    this.title = title
     this.x_labels = x_labels
     this.stats = stats
     /*
@@ -221,63 +203,74 @@ return Array.from(
       // borderWidth: 1,
       data: stat_array
     }
-  })
-)
+  }))
 }
 
-const groupedBarChartOptions = {
-  responsive: true,
-  legend: {
-    position: "top",
-  },
-  // title: {
-  //   display: true,
-  //   text: chartInput.title,
-  // },
-  scales: {
-    x: {
-      ticks: {
-        font: {
-          weight: "bold",
+function getCommonBarChartOptions(title) {
+  return {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: "top"
+      },
+      title: {
+        display: title != null,
+        text: title
+      },
+      datalabels: {
+        anchor: "center", // Position of the labels (start, end, center, etc.)
+        align: "center", // Alignment of the labels (start, end, center, etc.)
+        // color: 'blue', // Color of the labels
+        // font: {
+        //     weight: 'bold',
+        // },
+        formatter: function (value, context) {
+          return value == 0 ? "" : value; // Display the actual data value
         },
       },
+    }
+  }
+}
+
+function getGroupedBarChartOptions(title) {
+  return {
+    scales: {
+      x: {
+        ticks: {
+          font: {
+            weight: "bold",
+          },
+        },
+      },
+      y: [
+        {
+          beginAtZero: true,
+        },
+      ],
     },
-    y: [
-      {
+    ...getCommonBarChartOptions(title)
+  }
+} 
+
+function getStackedBarChartOptions(title) {
+  return {
+    scales: {
+      x: {
+        stacked: true,
+        ticks: {
+          font: {
+            weight: "bold",
+          },
+        },
+      },
+      y: {
+        stacked: true,
         beginAtZero: true,
       },
-    ],
-  },
-  plugins: plugins
-}
-
-const stackedBarChartOptions = {
-  responsive: true,
-  legend: {
-    position: "top",
-  },
-  // plugins: {
-  //   title: {
-  //     display: true,
-  //     text: chartInput.title,
-  //   }
-  // },
-  scales: {
-    x: {
-      stacked: true,
-      ticks: {
-        font: {
-          weight: "bold",
-        },
-      },
     },
-    y: {
-      stacked: true,
-      beginAtZero: true,
-    },
-  },
-  plugins: plugins
+    ...getCommonBarChartOptions(title)
+  }
 }
-
 
 export { ChartInput, ChartContainer };

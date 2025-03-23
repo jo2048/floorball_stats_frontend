@@ -66,7 +66,7 @@ function updateCreateChartButton() {
   const createChartButton = document.getElementById("create-chart-button")
   const selectedPlayersIds = getSelectedPlayersIds()
   
-  if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 10) {
+  if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
     createChartButton.disabled = false
     createChartButton.setAttribute("class", "btn btn-success")
   }
@@ -115,7 +115,7 @@ function getSelectedPlayersIds() {
 document.getElementById("create-chart-button").addEventListener("click", async () => {
   const selectedPlayersIds = getSelectedPlayersIds()
 
-  if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 10) {
+  if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
     const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
     const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers);
     await chartContainer.display()

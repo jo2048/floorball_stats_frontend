@@ -1,4 +1,4 @@
-  
+import { Config } from "./config.js";
 
 class Season {
   static _instances = null;
@@ -6,17 +6,30 @@ class Season {
   constructor(seasonId, seasonName) {
     this.id = seasonId;
     this.name = seasonName;
-    this.startDate = new Date(parseInt(this.name.split(" ")[1].slice(0, 4)), 7, 1);
-    this.endDate = new Date(parseInt(this.name.slice(-4)), 6, 31);
+    const re = new RegExp("^\\d{4}-\\d{2}$");
+    if (!re.test(this.name)) {
+      this.startDate = new Date(parseInt(this.name.split(" ")[1].slice(0, 4)), 7, 1);
+      this.endDate = new Date(parseInt(this.name.slice(-4)), 6, 31);
+    }
+    else {
+      this.startDate = new Date(parseInt(this.name.slice(0, 4)), 7, 1);
+      this.endDate = new Date(parseInt("20" + this.name.slice(-2)), 6, 31);
+    }
     this.clubs = null
   }
 
-  getFormattedName() {
+  getNameFormatted() {
     return this.name.slice(-9);
   }
 
   containsGame(game) {
     return game.tournament.season.id === this.id
+  }
+
+  static getSeasonByDate(date) {
+    if (!this._instances)
+      throw new Error("This method cannot be called before initializing list of seasons")
+    return this._instances.values().find(s => s.startDate >= date && s.endDate < date)
   }
 
   static async getSeasonById(seasonId) {
@@ -27,7 +40,7 @@ class Season {
   }
 
   static async fetchAllSeasons() {
-    const url = "https://www.floorballbelgium.be/api/public_season_getall.php";
+    const url = Config.getBaseUrl() + "public_season_getall.php";
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -49,7 +62,7 @@ class Season {
 
   async fetchClubs() {
     if (this.clubs == null) {
-      const url = "https://www.floorballbelgium.be/api/public_clubs_getall.php";
+      const url = Config.getBaseUrl() + "public_clubs_getall.php";
       const payload = { seasonid: this.id };
       try {
         const response = await fetch (url, {
@@ -81,7 +94,7 @@ class Season {
   }
 
   static async fetchTeamsBySeasonAndClub(seasonId, clubId) {
-    const url = "https://www.floorballbelgium.be/api/public_teams_byclubbyseason.php"
+    const url = Config.getBaseUrl() + "public_teams_byclubbyseason.php"
     const payload = { seasonid: seasonId, clubid: clubId };
     try {
       const response = await fetch (url, {

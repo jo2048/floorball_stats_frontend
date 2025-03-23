@@ -12,8 +12,15 @@ class Game {
     this.scoreHome = data["score_home"];
     this.scoreAway = data["score_away"];
     this.sporthallId = data["sporthall_id"];
-    this.date = data["date"];
+    this.date = new Date(data["date"]);
     this.time = data["time"];
+  }
+
+  getSeason() {
+    if (this.tournament.id && this.tournament.id >= 0)
+      return this.tournament.season
+    else
+      return Season.findSeasonByDate(this.date)
   }
 }
 
@@ -66,9 +73,8 @@ class GameCollection {
     if (!["SEASON", "TOURNAMENT"].includes(competitionLevel))
       throw new Error("Invalid argument exception")
     const groups = this.groupGamesBy(competitionLevel)
-    return Object.fromEntries(
-      Object.entries(groups).map(([k, v]) => [k, new GameCollection(v).computeStatForGames()])
-    );
+    console.log(groups)
+    return Array.from(groups.entries().map(([k, v]) => [k, new GameCollection(this.player, v).computeStats()]))
   }
 
   #roundNumber(number) {
@@ -96,7 +102,7 @@ class GameCollection {
   }
 
   groupGamesBy(competitionLevel) {
-    const groupingFunction = competitionLevel == "SEASON" ? (game) => game.tournament.season : (game) => game.tournament
+    const groupingFunction = competitionLevel == "SEASON" ? (game) => game.getSeason() : (game) => game.tournament
     const groups = new Map()
     for (const game of this.games) {
       const groupingKey = groupingFunction(game)

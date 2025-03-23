@@ -1,9 +1,15 @@
+import { Config } from "./config.js";
 import { Season } from "./season.js";
 
 class Tournament {
-  static cache = new Map([[-1, new Tournament(-1, "Empty tournament", new Season(-1, "Empty season", "Empty division"))]]);
+  static cache = new Map([
+    [-1, new Tournament(-1, "Empty tournament", new Season(-1, "Empty season", "Empty division"))],
+    [null, new Tournament(-1, "Empty tournament", new Season(-1, "Empty season", "Empty division"))]
+  ]);
 
   constructor(tournamentId, name, season, division) {
+    if (!tournamentId || !name || !season)
+      throw new Error("Illegal argument exception while trying to build tournament")
     this.id = tournamentId;
     this.name = name;
     this.season = season;
@@ -14,8 +20,8 @@ class Tournament {
     return game.tournamentId = this.id
   }
 
-  getFormattedName() {
-    return `${this.season.getFormattedName()} ${this.name.replace(/\[.*\]/, '').trim()}`;
+  getNameFormatted() {
+    return `${this.season.getNameFormatted()} ${this.name.replace(/\[.*\]/, '').trim()}`;
   }
 
   static async #delay(milliseconds){
@@ -25,14 +31,14 @@ class Tournament {
   }
 
   static async getTournamentById(tournamentId) {
-    if (!tournamentId)
+    if (tournamentId === undefined)
       throw new Error("Invalid argument to get tournament : tournamentId=", tournamentId)
     while (this.cache.has("wait-for-"+tournamentId))
       await this.#delay(250)
     if (!this.cache.has(tournamentId)) {
       this.cache.set("wait-for-"+tournamentId, "wait")
-      const tournamentData = await fetchTournament(tournamentId);
-      const season = await Season.getSeasonById(tournamentData["seasonId"]);
+      const [_, tournamentData] = await fetchTournament(tournamentId);
+      const season = await Season.getSeasonById(tournamentData["season_id"]);
       this.cache.delete("wait-for-"+tournamentId)
       this.cache.set(tournamentId, new Tournament(tournamentId, tournamentData["name"], season, tournamentData["division"]));
     }
@@ -41,7 +47,7 @@ class Tournament {
 }
 
 async function fetchTournament(tournamentId) {
-  const url = "https://www.floorballbelgium.be/api/public_tournament_get.php";
+  const url = Config.getBaseUrl() + "public_tournament_get.php";
   const payload = { id: tournamentId, command: "get" };
   try {
     const response = await fetch (url, {
