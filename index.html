@@ -33,8 +33,32 @@
   </div> -->
 
   <main>
-    <div id="add-players-div">
-      <h3>Select players</h3>
+    <div class="main-div">
+      <h3>Context</h3>
+      <b>WORK IN PROGRESS</b>
+      </br></br>
+      This page retrieves data from <a href="https://www.floorballbelgium.be/">the BFF official site</a> and uses it to draw graphs. 
+      </br></br>
+      <b>How to use</b></br>
+      <ol>
+        <li>First search players that may interest you. They will be added in the players pool</li>
+        <li>Then select / unselect players in the players pool by clicking on them</li>
+        <li>Finally create a chart with the selected players. The chart wont be created if more than 10 players are selected</li>
+      </ol> 
+    </div>
+    <div id="add-players-div" class="main-div">
+      <h3>Players search</h3>
+      <div>
+        <h5>Search by team</h5>
+        <label for="season-select">Season</label>
+        <select name="seasons" id="season-select"></select>
+        <label for="club-select">Club</label>
+        <select name="clubs" id="club-select"></select>
+        <label for="team-select">Team</label>
+        <select name="teams" id="team-select"></select>
+        <button id="search-team-players-btn" class="btn btn-primary">Search players from team</button>
+      </div>
+      <h5>Search by player name</h5>
       <form>
         <label for="search-player-input">Player name</label>
         <input type="search" id="search-player-input" name="search-player-input" required="true" minlength="3" maxlength="15" size="15" placeholder="Doe John" pattern="[a-zA-Z \-]+"></input>
@@ -43,7 +67,7 @@
       <br/>
     </div>
 
-    <div id="players-pool-div" class="container">
+    <div id="players-pool-div" class="container main-div">
       <h3>Players pool</h3>
       <div id="selected-players-labels" class="container" />
       </div>
@@ -55,7 +79,8 @@
       </div>
     </div>
 
-    <div id="chartsDiv">
+    <div id="chartsDiv" class="main-div">
+      <h3>Charts</h3>
     </div>
 
   </main>

@@ -40,8 +40,11 @@ class ChartContainer {
     this.div.classList.add("chart-container")
     const details = document.createElement("details")
     this.div.appendChild(details)
-    this.canvas = document.createElement("canvas")
-    this.div.appendChild(this.canvas)
+    const canvas = document.createElement("canvas")
+    this.chart = new Chart(canvas, {
+      type: "bar"
+    })
+    this.div.appendChild(canvas)
 
     const summary = document.createElement("summary")
     summary.innerHTML = "Chart parameters"
@@ -80,7 +83,6 @@ class ChartContainer {
         </fieldset>        
     `);
     
-    
     this.div.querySelectorAll("input").forEach(e => e.addEventListener("click", () => this.display()));
     this.parent.appendChild(this.div)
   }
@@ -100,11 +102,6 @@ class ChartContainer {
           //   </select>
           // </div>
 
-  #clearCanvas() {
-    if (this.chart)
-      this.chart.destroy()
-  }
-
   async #getPlayerStats() {
     if (this.playersStats == null) {
       const playerGames = await Promise.all(this.players.map(async p => (await GameCollection.loadPlayerGameCollection(p))))
@@ -114,8 +111,6 @@ class ChartContainer {
   }
 
   async display() {
-    this.#clearCanvas()
-
     var title = "Stats by player"
     var wonTieLost = false
     var statsToDisplay = []
@@ -158,10 +153,17 @@ class ChartContainer {
       Object.fromEntries(statsToDisplay.map(statType => [statType, sortedPlayers.map(([_, stats]) => statFunctions[statType](stats))]))      
     )
 
-    if(wonTieLost)
-      this.chart = drawStackedBarChart(this.canvas, chartInput)
+    this.chart.data = {
+      labels: chartInput.x_labels,
+      datasets: convertChartInputStatsToDataset(chartInput.stats)
+    }
+
+    if(wonTieLost) 
+      this.chart.options = stackedBarChartOptions
     else
-      this.chart = drawGroupedBarChart(this.canvas, chartInput)
+      this.chart.options = groupedBarChartOptions
+
+    this.chart.update()
   }
 
 }
@@ -184,42 +186,6 @@ const plugins = {
   },
 };
 
-function drawStackedBarChart(ctx, chartInput) {
-  return new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: chartInput.x_labels,
-      datasets: convertChartInputStatsToDataset(chartInput.stats)
-    },
-    options: {
-      responsive: true,
-      legend: {
-        position: "top",
-      },
-      plugins: {
-        title: {
-          display: true,
-          text: chartInput.title,
-        }
-      },
-      scales: {
-        x: {
-          stacked: true,
-          ticks: {
-            font: {
-              weight: "bold",
-            },
-          },
-        },
-        y: {
-          stacked: true,
-          beginAtZero: true,
-        },
-      },
-      plugins: plugins,
-    },
-  });
-}
 
 class ChartInput {
   constructor(title, x_labels, stats) {
@@ -253,44 +219,59 @@ return Array.from(
 )
 }
 
-
-function drawGroupedBarChart(ctx, chartInput) {
-  let barChartData = {
-    labels: chartInput.x_labels,
-    datasets: convertChartInputStatsToDataset(chartInput.stats)
-  };
-
-  let chartOptions = {
-    responsive: true,
-    legend: {
-      position: "top",
-    },
-    title: {
-      display: true,
-      text: chartInput.title,
-    },
-    scales: {
-      x: {
-        ticks: {
-          font: {
-            weight: "bold",
-          },
+const groupedBarChartOptions = {
+  responsive: true,
+  legend: {
+    position: "top",
+  },
+  // title: {
+  //   display: true,
+  //   text: chartInput.title,
+  // },
+  scales: {
+    x: {
+      ticks: {
+        font: {
+          weight: "bold",
         },
       },
-      y: [
-        {
-          beginAtZero: true,
-        },
-      ],
     },
-  };
-
-  return new Chart(ctx, {
-    type: "bar",
-    data: barChartData,
-    options: chartOptions,
-    plugins: plugins,
-  });
+    y: [
+      {
+        beginAtZero: true,
+      },
+    ],
+  },
+  plugins: plugins
 }
 
-export { drawStackedBarChart, drawGroupedBarChart, ChartInput, ChartContainer };
+const stackedBarChartOptions = {
+  responsive: true,
+  legend: {
+    position: "top",
+  },
+  // plugins: {
+  //   title: {
+  //     display: true,
+  //     text: chartInput.title,
+  //   }
+  // },
+  scales: {
+    x: {
+      stacked: true,
+      ticks: {
+        font: {
+          weight: "bold",
+        },
+      },
+    },
+    y: {
+      stacked: true,
+      beginAtZero: true,
+    },
+  },
+  plugins: plugins
+}
+
+
+export { ChartInput, ChartContainer };

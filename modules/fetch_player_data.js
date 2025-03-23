@@ -46,21 +46,30 @@ async function searchPlayerByName(playerName) {
       return [500, null];
     }
   }
-  
-  async function fetchTeamPlayers(teamId, seasonId) {
+
+  async function fetchTeamPlayers(teamId) {
+    if (!teamId)
+      throw new Error("Invalid argument to fetch playerData : teamId = ", teamId)
     const url = "https://www.floorballbelgium.be/api/public_players_get.php";
-    const payload = { id: parseInt(teamId), command: "club", season: parseInt(seasonId) };
+    const payload = { id: parseInt(teamId), command: "team" };
     try {
-        const response = await post(url, payload, { timeout: 5000 });
-        if (response.status === 400) {
-            return null;
-        }
-        return response.data;
+      const response = await fetch (url, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+          throw new Error(`Response status: ${response.status} for teamId= ${teamId}`);
+      }
+      const json = await response.json();
+      delete json.list_logo;
+      delete json.clublogo;
+      delete json.photo;
+      return [response.status, json];
     } catch (error) {
-        console.error(`Error fetching team players: ${error.message}`);
-        return null;
+      console.error(`Error fetching player data: ${error.message}`);
+      return [500, null];
     }
   }
 
 
-export { searchPlayerByName, fetchPlayerData }
+export { searchPlayerByName, fetchPlayerData, fetchTeamPlayers }

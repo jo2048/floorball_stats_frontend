@@ -11,7 +11,7 @@ body {
 
 
 
-#add-players-div, #players-pool-div {
+.main-div {
   background-color: white;
   padding: 10px;
   margin: 10px;
