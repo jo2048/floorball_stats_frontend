@@ -9,11 +9,9 @@ import { ChartContainer } from "./modules/display.js";
 
 function createPlayerSpan(player) {
   const span = document.createElement("span")
-  const text = document.createTextNode(player.name);
-  span.appendChild(text)
-  span.setAttribute("class", "player-pool-span")
-  span.setAttribute("state", "selected")
-  span.addEventListener("click", () => span.setAttribute("state", span.getAttribute("state") == "selected" ? "not-selected" : "selected"))
+  span.innerHTML = `${player.name}</br>${player.getAge()} years old</br>${player.clubName}`
+  span.setAttribute("class", "badge text-bg-success")
+  span.addEventListener("click", () => span.setAttribute("class", span.getAttribute("class") == "badge text-bg-success" ? "badge text-bg-secondary" : "badge text-bg-success"))
   return span
 }
 
@@ -58,7 +56,7 @@ document.getElementById("player-pool-remove-unselected-button").addEventListener
 
 document.getElementById("create-chart-button").addEventListener("click", async () => {
   const selectedPlayersIds = Array.from(playerInPool.entries()
-    .filter(([_, v]) => v.getAttribute("state") === "selected")
+    .filter(([_, v]) => v.getAttribute("class") === "badge text-bg-success")
     .map(([k, _]) => k));
   
   if (selectedPlayersIds.length > 0 && selectedPlayersIds.length < 10) {

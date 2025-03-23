@@ -8,8 +8,8 @@ const statFunctions = {
   "Goals": p => p.goals,
   "Assists": p => p.assists,
   "Faults": p => p.faults,
-  "Goal by match": p => p.goals_ratio,
-  "Assist by match": p => p.assists_ratio,
+  "Goals by match": p => p.goals_ratio,
+  "Assists by match": p => p.assists_ratio,
   "Faults by match": p => p.faults_ratio,
   "Won": p => p.won,
   "Lost": p => p.lost,
@@ -59,8 +59,8 @@ class ChartContainer {
             <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
             <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
           </div>
-          <div>
-            <span>
+          <div class="checkbox-group">
+            <span id="games-played-span-${this.id}">
               <input type="checkbox" name="games_played" id="games-played-checkbox-${this.id}" checked/>
               <label for="games-played-checkbox-${this.id}">Total games played</label>
             </span>        
@@ -69,7 +69,7 @@ class ChartContainer {
               <label for="goals-checkbox-${this.id}">Goals</label>
             </span>
             <span>
-              <input type="checkbox" name="assists" id="assits-checkbox-${this.id}" checked/>
+              <input type="checkbox" name="assists" id="assists-checkbox-${this.id}" checked/>
               <label for"assits-checkbox-${this.id}"=>Assists</label>
             </span>
             <span>
@@ -121,17 +121,29 @@ class ChartContainer {
     var statsToDisplay = []
     document.getElementById(`games-played-checkbox-${this.id}`).disabled = false
     if (document.getElementById(`stats-btn-${this.id}`).checked) {
+      this.div.querySelector("div[class='checkbox-group']").removeAttribute("style")
+      document.getElementById(`games-played-span-${this.id}`).removeAttribute("style")
       statsToDisplay = []
       if (document.getElementById(`games-played-checkbox-${this.id}`).checked)
         statsToDisplay.push("Games played")
-      statsToDisplay.push("Goals")
-      statsToDisplay.push("Assists")
-      statsToDisplay.push("Faults")
+      if (document.getElementById(`goals-checkbox-${this.id}`).checked)
+        statsToDisplay.push("Goals")
+      if (document.getElementById(`assists-checkbox-${this.id}`).checked)
+        statsToDisplay.push("Assists")
+      if (document.getElementById(`faults-checkbox-${this.id}`).checked)
+        statsToDisplay.push("Faults")
     } else if (document.getElementById(`stats-ratios-btn-${this.id}`).checked) {
-      document.getElementById(`games-played-checkbox-${this.id}`).checked = false
-      document.getElementById(`games-played-checkbox-${this.id}`).disabled = true
-      statsToDisplay = ["Goal by match", "Assist by match", "Faults by match"]
+      this.div.querySelector("div[class='checkbox-group']").removeAttribute("style")
+      document.getElementById(`games-played-span-${this.id}`).style.display = "none"
+      statsToDisplay = []
+      if (document.getElementById(`goals-checkbox-${this.id}`).checked)
+        statsToDisplay.push("Goals by match")
+      if (document.getElementById(`assists-checkbox-${this.id}`).checked)
+        statsToDisplay.push("Assists by match")
+      if (document.getElementById(`faults-checkbox-${this.id}`).checked)
+        statsToDisplay.push("Faults by match")
     } else {
+      this.div.querySelector("div[class='checkbox-group']").style.display = "none"
       title = "Won, tie, lost by player"
       wonTieLost = true
       statsToDisplay = ["Won", "Tie", "Lost"]
@@ -265,11 +277,9 @@ function drawGroupedBarChart(ctx, chartInput) {
           },
         },
       },
-      yAxes: [
+      y: [
         {
-          ticks: {
-            beginAtZero: true,
-          },
+          beginAtZero: true,
         },
       ],
     },
