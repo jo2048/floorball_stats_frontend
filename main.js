@@ -39,20 +39,40 @@ document.getElementById("search-team-players-btn").addEventListener("click", asy
 
 seasonSelect.dispatchEvent(new Event("change"))
 
+
 function createPlayerSpan(player) {
   const span = document.createElement("span")
   span.innerHTML = `${player.name}</br>${player.getAge()} years old</br>${player.clubName}`
   span.setAttribute("class", "badge text-bg-success")
-  span.addEventListener("click", () => span.setAttribute("class", span.getAttribute("class") == "badge text-bg-success" ? "badge text-bg-secondary" : "badge text-bg-success"))
+  span.addEventListener("click", () => {
+    span.setAttribute("class", span.getAttribute("class") == "badge text-bg-success" ? "badge text-bg-secondary" : "badge text-bg-success")
+    updateCreateChartButton()
+  })
   return span
 }
 
 var playerInPool = new Map()
+updateCreateChartButton()
 
 function addPlayerInPool(player) {
   if (!playerInPool.has(player.id)) {
     playerInPool.set(player.id, createPlayerSpan(player))
     document.getElementById("selected-players-labels").appendChild(playerInPool.get(player.id))
+    updateCreateChartButton()
+  }
+}
+
+function updateCreateChartButton() {
+  const createChartButton = document.getElementById("create-chart-button")
+  const selectedPlayersIds = getSelectedPlayersIds()
+  
+  if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 10) {
+    createChartButton.disabled = false
+    createChartButton.setAttribute("class", "btn btn-success")
+  }
+  else {
+    createChartButton.disabled = true
+    createChartButton.setAttribute("class", "btn btn-secondary")
   }
 }
 
@@ -86,13 +106,15 @@ document.getElementById("player-pool-remove-unselected-button").addEventListener
     })
 })
 
-
+function getSelectedPlayersIds() {
+  return Array.from(playerInPool.entries()
+    .filter(([_, v]) => v.getAttribute("class") === "badge text-bg-success")
+    .map(([k, _]) => k))
+}
 
 document.getElementById("create-chart-button").addEventListener("click", async () => {
-  const selectedPlayersIds = Array.from(playerInPool.entries()
-    .filter(([_, v]) => v.getAttribute("class") === "badge text-bg-success")
-    .map(([k, _]) => k));
-  
+  const selectedPlayersIds = getSelectedPlayersIds()
+
   if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 10) {
     const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
     const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers);

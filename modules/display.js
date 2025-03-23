@@ -52,15 +52,20 @@ class ChartContainer {
 
     // Template literals
     details.insertAdjacentHTML("beforeend", `
-      <div class="chart-container">
+      <div>
         <fieldset>
-          <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-            <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off" checked>
-            <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
-            <input type="radio" id="stats-ratios-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
-            <label class="btn btn-outline-primary" for="stats-ratios-btn-${this.id}">Stats ratios</label>
-            <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
-            <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
+          <div class="row">
+            <div class="btn-group col" role="group" aria-label="Basic radio toggle button group">
+              <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off" checked>
+              <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
+              <input type="radio" id="stats-ratios-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
+              <label class="btn btn-outline-primary" for="stats-ratios-btn-${this.id}">Stats ratios</label>
+              <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
+              <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
+            </div>
+            <div class="col">
+              <button class="btn btn-danger pull-right id="delete-btn-${this.id}">Delete chart</button>
+            </div>
           </div>
           <div class="checkbox-group">
             <span id="games-played-span-${this.id}">
@@ -84,6 +89,7 @@ class ChartContainer {
     `);
     
     this.div.querySelectorAll("input").forEach(e => e.addEventListener("click", () => this.display()));
+    details.querySelector("button").addEventListener("click", () => this.div.remove())
     this.parent.appendChild(this.div)
   }
 
