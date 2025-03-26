@@ -3,10 +3,6 @@ import { GameCollection } from "./game.js"
 Chart.register(ChartDataLabels);
 
 
-function roundNumber(number) {
-  return Math.round(number * 100 + Number.EPSILON ) / 100
-}
-
 const absoluteStatFunctions = {
   "Games played": p => p.games_played,
   "Goals": p => p.goals,
@@ -27,13 +23,12 @@ const ratioStatFunction = {
   "Tie": p => p.tie / p.games_played
 }
 
-
-
 class ChartContainer {
   static nextId = 0;
 
-  constructor(parent, players) {
+  constructor(parent, players, sortedSeasons) {
     this.id = ChartContainer.#getNextId()
+    this.sortedSeasons = sortedSeasons
     this.parent = parent
     this.players = players
     this.groupBy = "Player"
@@ -64,46 +59,70 @@ class ChartContainer {
 
     // Template literals
     details.insertAdjacentHTML("beforeend", `
-      <div>
-        <fieldset>
-          <div class="row">
-            <div class="btn-group col" role="group" aria-label="Basic radio toggle button group">
-              <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off" checked>
-              <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
-              <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
-              <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
-            </div>
-            <div class="col column-gap-2 d-flex flex-row justify-content-end">
-              <button class="btn btn-warning pull-right" id="hide-btn-${this.id}">Hide chart</button>
-              <button class="btn btn-danger pull-right" id="delete-btn-${this.id}">Delete chart</button>
-            </div>
+      <div class="container-fluid">
+        <div class="row">
+          <div class="btn-group col" role="group" aria-label="Basic radio toggle button group">
+            <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
+            <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
+            <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
           </div>
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="ratioCheckbox">
-            <label class="form-check-label" for="ratioCheckbox">Ratios</label>
+          <div class="form-check col form-switch">
+            <input class="form-check-input" type="checkbox" id="ratioCheckbox-${this.id}">
+            <label class="form-check-label" for="ratioCheckbox-${this.id}">Ratios</label>
           </div>
-          <div id="subparams" class="checkbox-group g-2">
+          <div class="col column-gap-2 d-flex flex-row justify-content-end">
+            <button class="btn btn-warning" id="hide-btn-${this.id}">Hide chart</button>
+            <button class="btn btn-danger" id="delete-btn-${this.id}">Delete chart</button>
+          </div>
+        </div>
+        <div class="column-gap-2 d-inline-flex flex-row mt-2" id="season-filter-group-${this.id}">
+          <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+            <input type="checkbox" class="btn-check" id="season-checkbox-${this.id}" autocomplete="off">
+            <label class="btn btn-outline-primary" for="season-checkbox-${this.id}">Filter on season</label>
+            <div>
+              <select class="form-select" id="season-select-${this.id}" style="display: none"></select>
+            </div>
+          </div>    
 
-            <span id="games-played-span-${this.id}">
-              <input type="checkbox" name="games_played" id="games-played-checkbox-${this.id}" checked/>
-              <label for="games-played-checkbox-${this.id}">Total games played</label>
-            </span>        
-            <span>
-              <input type="checkbox" name="goals" id="goals-checkbox-${this.id}" checked/>
-              <label for="goals-checkbox-${this.id}">Goals</label>
-            </span>
-            <span>
-              <input type="checkbox" name="assists" id="assists-checkbox-${this.id}" checked/>
-              <label for"assits-checkbox-${this.id}"=>Assists</label>
-            </span>
-            <span>
-              <input type="checkbox" name="faults" id="faults-checkbox-${this.id}" checked />
-              <label for="faults-checkbox-${this.id}">Faults</label>
-            </span>
-          </div>
-        </fieldset>   
+        </div>
+        <div id="subparams" class="checkbox-group g-2 mt-2">
+          <span id="games-played-span-${this.id}">
+            <input type="checkbox" name="games_played" id="games-played-checkbox-${this.id}" checked/>
+            <label for="games-played-checkbox-${this.id}">Total games played</label>
+          </span>        
+          <span>
+            <input type="checkbox" name="goals" id="goals-checkbox-${this.id}" checked/>
+            <label for="goals-checkbox-${this.id}">Goals</label>
+          </span>
+          <span>
+            <input type="checkbox" name="assists" id="assists-checkbox-${this.id}" checked/>
+            <label for"assits-checkbox-${this.id}"=>Assists</label>
+          </span>
+          <span>
+            <input type="checkbox" name="faults" id="faults-checkbox-${this.id}" checked />
+            <label for="faults-checkbox-${this.id}">Faults</label>
+          </span>
+        </div>
       </div>     
     `);
+
+    if ((this.players.length == 1))
+      this.div.querySelector(`#season-filter-group-${this.id}`).remove()
+    else {
+      const seasonSelect = this.div.querySelector(`#season-select-${this.id}`)
+      fillSelect(seasonSelect, this.sortedSeasons)
+  
+      this.div.querySelector(`#season-checkbox-${this.id}`).addEventListener("click", () => {
+        console.log( this.div.querySelector(`#season-checkbox-${this.id}`).checked)
+        seasonSelect.style.display = this.div.querySelector(`#season-checkbox-${this.id}`).checked ? "block" : "none"
+      })
+
+      seasonSelect.addEventListener("change", () => {
+
+      })
+    }
+
     this.div.querySelectorAll("input").forEach(e => e.addEventListener("click", () => this.display()));
     const hideButton = details.querySelector(`#hide-btn-${this.id}`)
     hideButton.addEventListener("click", () => {
@@ -120,21 +139,6 @@ class ChartContainer {
     details.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.div.remove())
     this.parent.appendChild(this.div)
   }
-
-            // <div>
-          //   <label>Select season</label>
-          //   <select name="seasons" id="seasonSelect"></select>
-          // </div>
-          // <div>
-          //   <label>Filter on</label>
-          // </div>
-          // <div>
-          //   <label>Group by</label>
-          //   <select name="groupBy" id="groupBySelect">
-          //     <option value="Season">Season</option>
-          //     <option value="Competition">Competition</option>
-          //   </select>
-          // </div>
 
   async #getPlayersStats() {
     if (this.playersStats == null) {
@@ -167,7 +171,7 @@ class ChartContainer {
       statsToDisplay = ["Won", "Tie", "Lost"]
     }
 
-    const statFunctions = document.getElementById("ratioCheckbox").checked ? ratioStatFunction : absoluteStatFunctions
+    const statFunctions = document.getElementById(`ratioCheckbox-${this.id}`).checked ? ratioStatFunction : absoluteStatFunctions
 
     const playersStats = await this.#getPlayersStats()
     
@@ -224,6 +228,10 @@ return Array.from(
       data: stat_array
     }
   }))
+}
+
+function roundNumber(number) {
+  return Math.round(number * 100 + Number.EPSILON ) / 100
 }
 
 function getCommonBarChartOptions(title) {
@@ -288,4 +296,15 @@ function getStackedBarChartOptions(title) {
   }
 }
 
-export { ChartInput, ChartContainer };
+function fillSelect(select, values) {
+  select.querySelectorAll("option").forEach(e => e.remove())
+  for (const elt of values) {
+    const opt = document.createElement("option");
+    opt.value = elt["id"]
+    opt.textContent = elt["name"];
+    select.appendChild(opt);
+  }
+}
+
+
+export { ChartInput, ChartContainer, fillSelect };

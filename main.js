@@ -1,11 +1,12 @@
 import { Season } from "./modules/season.js";
 import { Player } from "./modules/player.js";
 import { searchPlayerByName, fetchTeamPlayers } from "./modules/fetch_player_data.js";
-import { ChartContainer } from "./modules/display.js";
+import { ChartContainer, fillSelect } from "./modules/display.js";
 
 
 const seasonSelect = document.getElementById("season-select")
-fillSelect(seasonSelect, await Season.getSeasonsSorted())
+const seasonsSorted = await Season.getSeasonsSorted()
+fillSelect(seasonSelect, seasonsSorted)
 
 seasonSelect.addEventListener("change", async () => {
   const clubs = await Season.fetchSeasonClubs(seasonSelect.value)
@@ -13,15 +14,6 @@ seasonSelect.addEventListener("change", async () => {
   document.getElementById("club-select").dispatchEvent(new Event("change"))
 })
 
-function fillSelect(select, values) {
-  select.querySelectorAll("option").forEach(e => e.remove())
-  for (const elt of values) {
-    const opt = document.createElement("option");
-    opt.value = elt["id"]
-    opt.textContent = elt["name"];
-    select.appendChild(opt);
-  }
-}
 
 document.getElementById("club-select").addEventListener("change", async () => {
   const [_, teams] = await Season.fetchTeamsBySeasonAndClub(seasonSelect.value, document.getElementById("club-select").value)
@@ -161,7 +153,7 @@ document.getElementById("create-chart-button").addEventListener("click", async (
 
   if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
     const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
-    const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers);
+    const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers, seasonsSorted);
     await chartContainer.display()
   }
 })

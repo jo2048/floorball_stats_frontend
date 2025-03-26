@@ -58,9 +58,9 @@ canvas {
 .chart-container {
   background-color: white;
   padding: 10px;
-  margin: 10px auto 10px;
+  /* margin: 10px auto 10px; */
+  margin: 8px;
   border-radius: 10px;
-  width: 95%;
   position: relative;
   height: 50%;
   border: solid 2px;
