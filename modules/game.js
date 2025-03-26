@@ -77,10 +77,6 @@ class GameCollection {
     return Array.from(groups.entries().map(([k, v]) => [k, new GameCollection(this.player, v).computeStats()]))
   }
 
-  #roundNumber(number) {
-    return Math.round( number * 100 + Number.EPSILON ) / 100
-  }
-
   computeStats() {
     const gamesPlayedCount = this.getGamesPlayedCount()
     const goalsCount = this.getGoalsCount()
@@ -92,9 +88,6 @@ class GameCollection {
       goals: goalsCount,
       assists: assistsCount,
       faults: faultsCount,
-      goals_ratio: this.#roundNumber(goalsCount / gamesPlayedCount),
-      assists_ratio: this.#roundNumber(assistsCount / gamesPlayedCount),
-      faults_ratio: this.#roundNumber(faultsCount / gamesPlayedCount),
       won: wonTieLostCount.get("WON"),
       tie: wonTieLostCount.get("TIE"),
       lost: wonTieLostCount.get("LOST")

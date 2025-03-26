@@ -3,17 +3,28 @@ import { GameCollection } from "./game.js"
 Chart.register(ChartDataLabels);
 
 
-const statFunctions = {
+function roundNumber(number) {
+  return Math.round(number * 100 + Number.EPSILON ) / 100
+}
+
+const absoluteStatFunctions = {
   "Games played": p => p.games_played,
   "Goals": p => p.goals,
   "Assists": p => p.assists,
   "Faults": p => p.faults,
-  "Goals by match": p => p.goals_ratio,
-  "Assists by match": p => p.assists_ratio,
-  "Faults by match": p => p.faults_ratio,
   "Won": p => p.won,
   "Lost": p => p.lost,
   "Tie": p => p.tie
+}
+
+const ratioStatFunction = {
+  "Games played": p => 1,
+  "Goals": p => p.goals / p.games_played,
+  "Assists": p => p.assists / p.games_played,
+  "Faults": p => p.faults / p.games_played,
+  "Won": p => p.won / p.games_played,
+  "Lost": p => p.lost / p.games_played,
+  "Tie": p => p.tie / p.games_played
 }
 
 
@@ -41,11 +52,11 @@ class ChartContainer {
     this.div.classList.add("chart-container")
     const details = document.createElement("details")
     this.div.appendChild(details)
-    const canvas = document.createElement("canvas")
-    this.chart = new Chart(canvas, {
+    this.canvas = document.createElement("canvas")
+    this.chart = new Chart(this.canvas , {
       type: "bar"
     })
-    this.div.appendChild(canvas)
+    this.div.appendChild(this.canvas)
 
     const summary = document.createElement("summary")
     summary.innerHTML = "Chart parameters"
@@ -59,16 +70,20 @@ class ChartContainer {
             <div class="btn-group col" role="group" aria-label="Basic radio toggle button group">
               <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off" checked>
               <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
-              <input type="radio" id="stats-ratios-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
-              <label class="btn btn-outline-primary" for="stats-ratios-btn-${this.id}">Stats ratios</label>
               <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio" autocomplete="off">
               <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
             </div>
-            <div class="col">
-              <button class="btn btn-danger pull-right id="delete-btn-${this.id}">Delete chart</button>
+            <div class="col column-gap-2 d-flex flex-row justify-content-end">
+              <button class="btn btn-warning pull-right" id="hide-btn-${this.id}">Hide chart</button>
+              <button class="btn btn-danger pull-right" id="delete-btn-${this.id}">Delete chart</button>
             </div>
           </div>
-          <div class="checkbox-group">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="ratioCheckbox">
+            <label class="form-check-label" for="ratioCheckbox">Ratios</label>
+          </div>
+          <div id="subparams" class="checkbox-group g-2">
+
             <span id="games-played-span-${this.id}">
               <input type="checkbox" name="games_played" id="games-played-checkbox-${this.id}" checked/>
               <label for="games-played-checkbox-${this.id}">Total games played</label>
@@ -86,11 +101,23 @@ class ChartContainer {
               <label for="faults-checkbox-${this.id}">Faults</label>
             </span>
           </div>
-        </fieldset>        
+        </fieldset>   
+      </div>     
     `);
-    
     this.div.querySelectorAll("input").forEach(e => e.addEventListener("click", () => this.display()));
-    details.querySelector("button").addEventListener("click", () => this.div.remove())
+    const hideButton = details.querySelector(`#hide-btn-${this.id}`)
+    hideButton.addEventListener("click", () => {
+      if (this.canvas.style.display == "block") {
+        this.canvas.style.display = "none"
+        hideButton.textContent = "Display chart"
+      }
+      else {
+        this.canvas.style.display = "block"
+        hideButton.textContent = "Hide chart"
+      }
+
+    })
+    details.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.div.remove())
     this.parent.appendChild(this.div)
   }
 
@@ -124,7 +151,7 @@ class ChartContainer {
     var statsToDisplay = []
     document.getElementById(`games-played-checkbox-${this.id}`).disabled = false
     if (document.getElementById(`stats-btn-${this.id}`).checked) {
-      this.div.querySelector("div[class='checkbox-group']").removeAttribute("style")
+      this.div.querySelector("#subparams").removeAttribute("style")
       document.getElementById(`games-played-span-${this.id}`).removeAttribute("style")
       if (document.getElementById(`games-played-checkbox-${this.id}`).checked)
         statsToDisplay.push("Games played")
@@ -134,20 +161,13 @@ class ChartContainer {
         statsToDisplay.push("Assists")
       if (document.getElementById(`faults-checkbox-${this.id}`).checked)
         statsToDisplay.push("Faults")
-    } else if (document.getElementById(`stats-ratios-btn-${this.id}`).checked) {
-      this.div.querySelector("div[class='checkbox-group']").removeAttribute("style")
-      document.getElementById(`games-played-span-${this.id}`).style.display = "none"
-      if (document.getElementById(`goals-checkbox-${this.id}`).checked)
-        statsToDisplay.push("Goals by match")
-      if (document.getElementById(`assists-checkbox-${this.id}`).checked)
-        statsToDisplay.push("Assists by match")
-      if (document.getElementById(`faults-checkbox-${this.id}`).checked)
-        statsToDisplay.push("Faults by match")
     } else {
-      this.div.querySelector("div[class='checkbox-group']").style.display = "none"
+      this.div.querySelector("#subparams").style.display = "none"
       wonTieLost = true
       statsToDisplay = ["Won", "Tie", "Lost"]
     }
+
+    const statFunctions = document.getElementById("ratioCheckbox").checked ? ratioStatFunction : absoluteStatFunctions
 
     const playersStats = await this.#getPlayersStats()
     
@@ -226,7 +246,7 @@ function getCommonBarChartOptions(title) {
         //     weight: 'bold',
         // },
         formatter: function (value, context) {
-          return value == 0 ? "" : value; // Display the actual data value
+          return value == 0 ? "" : roundNumber(value); // Display the actual data value
         },
       },
     }
@@ -242,12 +262,7 @@ function getGroupedBarChartOptions(title) {
             weight: "bold",
           },
         },
-      },
-      y: [
-        {
-          beginAtZero: true,
-        },
-      ],
+      }
     },
     ...getCommonBarChartOptions(title)
   }

@@ -1,18 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&display=swap');
 
-body {
+/* body {
   font-family: 'Open Sans', sans-serif;
   background-color: lightgray;
   margin: 0 auto;
   width: 90%;
   position: relative;
-  /*max-width: 1280px;*/
+  
+} */
+
+/* Default style for widths 600px and above
+div {
+  width: 80%;
 }
 
-
+/* Style for widths under 600px
+@media (max-width: 600px) {
+  div {
+    width: 100%;
+  }
+} */
 
 .main-div {
-  background-color: white;
+  background-color: lightblue;
   padding: 10px;
   margin: 10px;
   border-radius: 10px;
@@ -51,9 +60,9 @@ canvas {
   padding: 10px;
   margin: 10px auto 10px;
   border-radius: 10px;
-  width: 90%;
+  width: 95%;
   position: relative;
-  height: 70%;
+  height: 50%;
   border: solid 2px;
 }
 
@@ -84,39 +93,6 @@ footer {
 
 span {
   box-sizing: border-box;
-}
-
-/* Style the search field */
-form input[type=search] {
-  /* padding: 10px; */
-  /* font-size: 17px; */
-  border: 1px solid grey;
-  float: left;
-  /* width: 80%; */
-  background: #f1f1f1;
-}
-
-/* Style the submit button */
-form button {
-  float: left;
-  /* padding: 10px; */
-  background: #2196F3;
-  color: white;
-  /* font-size: 17px; */
-  border: 1px solid grey;
-  border-left: none; /* Prevent double borders */
-  cursor: pointer;
-}
-
-form button:hover {
-  background: #0b7dda;
-}
-
-/* Clear floats */
-form ::after {
-  content: "";
-  clear: both;
-  display: table;
 }
 
 

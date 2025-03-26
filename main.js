@@ -29,6 +29,8 @@ document.getElementById("club-select").addEventListener("change", async () => {
   fillSelect(document.getElementById("team-select"), teams)
 })
 
+
+
 document.getElementById("search-team-players-btn").addEventListener("click", async () => {
   const [_ ,data] = await fetchTeamPlayers(document.getElementById("team-select").value)
   const clubName = document.getElementById("club-select").options[document.getElementById("club-select").selectedIndex].text
@@ -40,12 +42,25 @@ document.getElementById("search-team-players-btn").addEventListener("click", asy
 seasonSelect.dispatchEvent(new Event("change"))
 
 
+
 function createPlayerSpan(player) {
   const span = document.createElement("span")
   span.innerHTML = `${player.name}</br>${player.getAge()} years old</br>${player.clubName}`
   span.setAttribute("class", "badge text-bg-success")
+  span.setAttribute("status", "selected")
+  span.changeStatus = (newStatus) => {
+    span.setAttribute("status", newStatus)
+    if (newStatus == "selected") {
+      span.classList.remove("text-bg-secondary")
+      span.classList.add("text-bg-success")
+    } else {
+      span.classList.remove("text-bg-success")
+      span.classList.add("text-bg-secondary")
+    }
+  }
   span.addEventListener("click", () => {
-    span.setAttribute("class", span.getAttribute("class") == "badge text-bg-success" ? "badge text-bg-secondary" : "badge text-bg-success")
+    const newStatus = span.getAttribute("status") == "selected" ? "not-selected" : "selected"
+    span.changeStatus(newStatus)
     updateCreateChartButton()
   })
   return span
@@ -64,22 +79,49 @@ function addPlayerInPool(player) {
 
 function updateCreateChartButton() {
   const createChartButton = document.getElementById("create-chart-button")
+  const playersCountBadge = document.getElementById("selected-players-button-count")
   const selectedPlayersIds = getSelectedPlayersIds()
   
   if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
     createChartButton.disabled = false
-    createChartButton.setAttribute("class", "btn btn-success")
+    createChartButton.classList.remove("btn-secondary")
+    createChartButton.classList.add("btn-success")
+    playersCountBadge.classList.remove("bg-danger")
+    playersCountBadge.classList.add("bg-success")
   }
   else {
     createChartButton.disabled = true
-    createChartButton.setAttribute("class", "btn btn-secondary")
+    createChartButton.classList.remove("btn-success")
+    createChartButton.classList.add("btn-secondary")
+    playersCountBadge.classList.remove("bg-success")
+    playersCountBadge.classList.add("bg-danger")
   }
+
+  document.getElementById("selected-players-button-count").textContent = selectedPlayersIds.length
 }
 
-document.getElementById("search-player-button").addEventListener("click", async (event) => {
-  event.preventDefault()
-  if (document.getElementById("search-player-input").checkValidity()) {
-    const [_, result] = await searchPlayerByName(document.getElementById("search-player-input").value)
+const searchPlayerInput = document.getElementById("search-player-input")
+const searchPlayerButton = document.getElementById("search-player-button")
+searchPlayerInput.addEventListener("change", () => {
+  if (!searchPlayerInput.checkValidity()) {
+    searchPlayerButton.disabled = true
+    searchPlayerButton.classList.remove("btn-success")
+    searchPlayerButton.classList.add("btn-secondary")
+    if (searchPlayerInput.value) 
+      searchPlayerInput.classList.add("border-danger")
+  }
+  else {
+    searchPlayerButton.disabled = false
+    searchPlayerButton.classList.remove("btn-secondary")
+    searchPlayerButton.classList.add("btn-success")
+    searchPlayerInput.classList.remove("border-danger")
+  }
+})
+searchPlayerInput.dispatchEvent(new Event("change"))
+
+searchPlayerButton.addEventListener("click", async () => {
+  if (searchPlayerInput.checkValidity()) {
+    const [_, result] = await searchPlayerByName(searchPlayerInput.value)
     const players = await Promise.all(result.map((data) => Player.registerPlayer(data)))
     players.forEach(p => addPlayerInPool(p))
   }
@@ -87,14 +129,16 @@ document.getElementById("search-player-button").addEventListener("click", async 
 
 document.getElementById("player-pool-unselect-all-button").addEventListener("click", () => {
   playerInPool.forEach((v, k) => {
-    v.setAttribute("class", "badge text-bg-secondary")
+    v.changeStatus("not-selected")
   });
+  updateCreateChartButton()
 })
 
 document.getElementById("player-pool-select-all-button").addEventListener("click", () => {
   playerInPool.forEach((v, k) => {
-    v.setAttribute("class", "badge text-bg-success")
+    v.changeStatus("selected")
   });
+  updateCreateChartButton()
 })
 
 document.getElementById("player-pool-remove-unselected-button").addEventListener("click", () => {
@@ -108,7 +152,7 @@ document.getElementById("player-pool-remove-unselected-button").addEventListener
 
 function getSelectedPlayersIds() {
   return Array.from(playerInPool.entries()
-    .filter(([_, v]) => v.getAttribute("class") === "badge text-bg-success")
+    .filter(([_, v]) => v.getAttribute("status") == "selected")
     .map(([k, _]) => k))
 }
 
