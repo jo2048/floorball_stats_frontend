@@ -1,25 +1,4 @@
 
-/* body {
-  font-family: 'Open Sans', sans-serif;
-  background-color: lightgray;
-  margin: 0 auto;
-  width: 90%;
-  position: relative;
-  
-} */
-
-/* Default style for widths 600px and above
-div {
-  width: 80%;
-}
-
-/* Style for widths under 600px
-@media (max-width: 600px) {
-  div {
-    width: 100%;
-  }
-} */
-
 .main-div {
   background-color: lightblue;
   padding: 10px;
@@ -27,88 +6,27 @@ div {
   border-radius: 10px;
 }
 
-#selected-players-labels{
-  margin: 10px;
-}
-
-.badge{
-  margin: 5px;
-  padding: 10px;
-}
-
-
-/* #left {
-  background-color: #ddeeff;
-  border: 1px solid #aaccee;
-  margin: 10px 15px;
-  padding: 0px 10px;
-  top: 0px;
-  left: 0px;
-  width: 240px; */
-/* } */
-
 canvas {
   max-height: 600px;
 }
 
-.orange {
-  background-color: orange;
-}
-
 .chart-container {
   background-color: white;
-  padding: 10px;
-  /* margin: 10px auto 10px; */
+  /* padding: 10px; */
+  padding: 0.5em 0.5em 0;
   margin: 8px;
   border-radius: 10px;
   position: relative;
-  height: 50%;
   border: solid 2px;
-}
-
-
-.inter{
-  height: 10px;
-}
-
-label, footer {
-    font-family: sans-serif;
-}
-
-label {
-    font-size: 1rem;
-}
-
-select {
-    font-size: .9rem;
-    padding: 2px 5px;
-}
-
-footer {
-    font-size: .8rem;
-    position: absolute;
-    bottom: 30px;
-    left: 30px;
 }
 
 span {
   box-sizing: border-box;
 }
 
-
-details {
-  border: 1px solid #aaa;
-  border-radius: 4px;
-  padding: 0.5em 0.5em 0;
-}
-
 summary {
   font-weight: bold;
   margin: -0.5em -0.5em 0;
-  padding: 0.5em;
-}
-
-details[open] {
   padding: 0.5em;
 }
 

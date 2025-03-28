@@ -42,9 +42,7 @@ class ChartContainer {
     this.sortedSeasons = sortedSeasons
     this.parent = parent
     this.players = players
-    this.groupBy = "Player"
-    this.playersGames = null
-    this.title = this.players.length == 1 ? "Stats " + this.players[0].getNameFormatted() : null
+    this.title = "Chart " + this.players.slice(0, Math.min(3, this.players.length)).map(p => p.getNameFormatted()).join(", ") + (3 >= this.players.length ? "" : ", ...")
     this.init()
   }
 
@@ -54,28 +52,15 @@ class ChartContainer {
   }
 
   init() {
-    this.div = document.createElement("div")
+    this.div = document.createElement("details")
     this.div.classList.add("chart-container")
-    const details = document.createElement("details")
-    this.div.appendChild(details)
-    this.canvas = document.createElement("canvas")
-    this.chart = new Chart(this.canvas , {
-      type: "bar"
-    })
-    this.div.appendChild(this.canvas)
-
-    const summary = document.createElement("summary")
-    summary.innerHTML = "Chart parameters"
-    details.appendChild(summary)
-
-    /*          <div class="form-check col form-switch">
-            <input class="form-check-input" type="checkbox" id="ratio-checkbox-${this.id}">
-            <label class="form-check-label" for="ratio-checkbox-${this.id}">Ratios</label>
-          </div>*/
-
-    // Template literals
-    details.insertAdjacentHTML("beforeend", `
-      <div class="container-fluid">
+    this.div.setAttribute("open", true)
+    const chartSummary = document.createElement("summary")
+    chartSummary.textContent = this.title
+    this.div.appendChild(chartSummary)
+    
+    this.div.insertAdjacentHTML("beforeend", `
+      <div class="container-fluid my-3" id="parameters-div-${this.id}">
         <div class="row">
           <div id="main-parameters-div-${this.id}" class="col-9 d-flex flex-wrap flex-row gap-2 align-self-start">
             <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
@@ -100,12 +85,13 @@ class ChartContainer {
             </div>
           </div>
           <div class="col-3 gap-2 d-flex flex-row flex-wrap justify-content-end align-self-end">
-            <button class="btn btn-warning align-self-end" id="hide-btn-${this.id}">Hide chart</button>
             <button class="btn btn-danger align-self-end" id="delete-btn-${this.id}">Delete chart</button>
           </div>
         </div>
       </div>     
     `);
+
+    const parametersDiv = this.div.querySelector(`#parameters-div-${this.id}`)
 
     if ((this.players.length == 1)) {
       this.div.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
@@ -127,32 +113,24 @@ class ChartContainer {
           </div>
         </div>`
       )
-      
+
       const seasonSelect = this.div.querySelector(`#season-select-${this.id}`)
       fillSelect(seasonSelect, this.sortedSeasons)
   
       this.div.querySelector(`#season-checkbox-${this.id}`).addEventListener("click", () => {
         seasonSelect.style.display = this.div.querySelector(`#season-checkbox-${this.id}`).checked ? "block" : "none"
       })
-
       seasonSelect.addEventListener("change", () => this.display())
     }
 
-    this.div.querySelectorAll("input").forEach(e => e.addEventListener("click", () => this.display()));
-
-    const hideButton = details.querySelector(`#hide-btn-${this.id}`)
-    hideButton.addEventListener("click", () => {
-      if (this.canvas.style.display == "block") {
-        this.canvas.style.display = "none"
-        hideButton.textContent = "Display chart"
-      }
-      else {
-        this.canvas.style.display = "block"
-        hideButton.textContent = "Hide chart"
-      }
-
+    this.canvas = document.createElement("canvas")
+    this.chart = new Chart(this.canvas , {
+      type: "bar"
     })
-    details.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.div.remove())
+    this.div.appendChild(this.canvas)
+
+    this.div.querySelectorAll("input").forEach(e => e.addEventListener("click", () => this.display()));
+    parametersDiv.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.div.remove())
     this.parent.appendChild(this.div)
   }
 
