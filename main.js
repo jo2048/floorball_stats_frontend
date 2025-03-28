@@ -94,7 +94,9 @@ function updateCreateChartButton() {
 
 const searchPlayerInput = document.getElementById("search-player-input")
 const searchPlayerButton = document.getElementById("search-player-button")
-searchPlayerInput.addEventListener("change", () => {
+
+function updateSearchPlayerBtn() {  
+  searchPlayerInput.classList.remove("border-danger")
   if (!searchPlayerInput.checkValidity()) {
     searchPlayerButton.disabled = true
     searchPlayerButton.classList.remove("btn-success")
@@ -106,10 +108,14 @@ searchPlayerInput.addEventListener("change", () => {
     searchPlayerButton.disabled = false
     searchPlayerButton.classList.remove("btn-secondary")
     searchPlayerButton.classList.add("btn-success")
-    searchPlayerInput.classList.remove("border-danger")
   }
-})
-searchPlayerInput.dispatchEvent(new Event("change"))
+}
+
+searchPlayerInput.addEventListener("change", () => updateSearchPlayerBtn())
+searchPlayerInput.addEventListener("keyup", () => updateSearchPlayerBtn())
+
+
+searchPlayerInput.dispatchEvent(new Event("keyup"))
 
 searchPlayerButton.addEventListener("click", async () => {
   if (searchPlayerInput.checkValidity()) {

@@ -73,7 +73,6 @@ class GameCollection {
     if (!["SEASON", "TOURNAMENT"].includes(competitionLevel))
       throw new Error("Invalid argument exception")
     const groups = this.groupGamesBy(competitionLevel)
-    console.log(groups)
     return Array.from(groups.entries().map(([k, v]) => [k, new GameCollection(this.player, v).computeStats()]))
   }
 
@@ -92,6 +91,10 @@ class GameCollection {
       tie: wonTieLostCount.get("TIE"),
       lost: wonTieLostCount.get("LOST")
     }
+  }
+
+  filterOnSeason(season) {
+    return new GameCollection(this.player, Array.from(this.games.filter(g => g.getSeason() == season)))
   }
 
   groupGamesBy(competitionLevel) {

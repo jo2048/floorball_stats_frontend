@@ -21,7 +21,7 @@ class Tournament {
   }
 
   getNameFormatted() {
-    return `${this.season.getNameFormatted()} ${this.name.replace(/\[.*\]/, '').trim()}`;
+    return [this.season.getNameFormatted(), this.name.replace(/\[.*\]/, '').trim()]
   }
 
   static async #delay(milliseconds){
