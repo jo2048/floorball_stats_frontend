@@ -73,7 +73,7 @@ class ChartContainer {
               <input type="checkbox" class="btn-check" id="ratio-checkbox-${this.id}" autocomplete="off">
               <label class="btn btn-outline-success" for="ratio-checkbox-${this.id}">Ratios</label>
             </div>
-            <div id="subparams" class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+            <div id="subparams" class="btn-group flex-wrap" role="group" aria-label="Basic checkbox toggle button group">
               <input type="checkbox" class="btn-check" name="games_played" id="games-played-checkbox-${this.id}" checked autocomplete="off"/>
               <label class="btn btn-outline-success" for="games-played-checkbox-${this.id}">Games played</label>
               <input type="checkbox" class="btn-check" name="goals" id="goals-checkbox-${this.id}" checked autocomplete="off"/>
@@ -85,16 +85,22 @@ class ChartContainer {
             </div>
           </div>
           <div class="col-3 gap-2 d-flex flex-row flex-wrap justify-content-end align-self-end">
+            <button class="btn btn-warning align-self-end d-md-none" id="expand-btn-${this.id}">Expand chart</button>
             <button class="btn btn-danger align-self-end" id="delete-btn-${this.id}">Delete chart</button>
           </div>
         </div>
       </div>     
     `);
 
+    this.div.querySelector(`#expand-btn-${this.id}`).addEventListener("click", () => {
+      this.div.style.minWidth = "600px"
+      this.div.querySelector(`#expand-btn-${this.id}`).style.display = "none"
+    })
+
     const parametersDiv = this.div.querySelector(`#parameters-div-${this.id}`)
 
     if ((this.players.length == 1)) {
-      this.div.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
+      parametersDiv.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
         <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
           <input type="radio" id="group-season-btn-${this.id}" class="btn-check" name="grouping-radio${this.id}" autocomplete="off" checked/>
           <label class="btn btn-outline-primary" for="group-season-btn-${this.id}">Group by season</label>
@@ -104,7 +110,7 @@ class ChartContainer {
       )
     }
     else {
-      this.div.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
+      parametersDiv.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
         <div class="gap-2 d-inline-flex flex-row" id="season-filter-group-${this.id}">
           <input type="checkbox" class="btn-check" id="season-checkbox-${this.id}" autocomplete="off">
           <label class="btn btn-outline-success" for="season-checkbox-${this.id}">Filter by season</label>
@@ -114,7 +120,7 @@ class ChartContainer {
         </div>`
       )
 
-      const seasonSelect = this.div.querySelector(`#season-select-${this.id}`)
+      const seasonSelect = parametersDiv.querySelector(`#season-select-${this.id}`)
       fillSelect(seasonSelect, this.sortedSeasons)
   
       this.div.querySelector(`#season-checkbox-${this.id}`).addEventListener("click", () => {

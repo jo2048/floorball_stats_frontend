@@ -1,7 +1,12 @@
+import { testSafari } from "./modules/exclude_safari.js";
+
 import { Season } from "./modules/season.js";
 import { Player } from "./modules/player.js";
 import { searchPlayerByName, fetchTeamPlayers } from "./modules/fetch_player_data.js";
 import { ChartContainer, fillSelect } from "./modules/display.js";
+
+
+testSafari()
 
 
 const seasonSelect = document.getElementById("season-select")
