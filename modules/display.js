@@ -26,10 +26,10 @@ const ratioStatFunction = {
 
 const colors = {
   "Games played": "rgba(54, 162, 235, 0.5)",
-  "Goals": "rgba(7, 158, 7, 0.5)",
+  "Goals": "rgba(7, 130, 7, 0.5)",
   "Assists": "rgba(230, 197, 12, 0.5)",
   "Faults": "rgba(236, 2, 2, 0.5)",
-  "Won": "rgba(7, 158, 7, 0.5)",
+  "Won": "rgba(7, 130, 7, 0.5)",
   "Lost": "rgba(236, 10, 10, 0.5)",
   "Tie": "rgba(54, 162, 235, 0.5)"
 }
@@ -42,7 +42,7 @@ class ChartContainer {
     this.sortedSeasons = sortedSeasons
     this.parent = parent
     this.players = players
-    this.title = "Chart " + this.players.slice(0, Math.min(3, this.players.length)).map(p => p.getNameFormatted()).join(", ") + (3 >= this.players.length ? "" : ", ...")
+    this.title = this.players.slice(0, Math.min(3, this.players.length)).map(p => p.getNameFormatted()).join(", ") + (3 >= this.players.length ? "" : ", ...")
     this.init()
   }
 
@@ -192,9 +192,27 @@ class ChartContainer {
       Object.fromEntries(statsToDisplay.map(statType => [statType, sortedStats.map(([_, stats]) => statFunctions[statType](stats))]))
     )
 
+    let datasets = convertChartInputStatsToDataset(chartInput.stats)
+    // datasets.push({
+    //   label: 'Dataset 2',
+    //   data: Array(this.players.length).fill(1),
+    //   backgroundColor: "blue",
+    //   borderColor: "blue",
+    //   borderWidth: .5,
+    //   pointRadius: Array(this.players.length).fill(0),
+    //   type: 'line',
+    //   order: 0,
+    //   datalabels: {
+    //     labels: {
+    //       title: null
+    //     }
+
+    //   }
+    // })
+
     this.chart.data = {
       labels: chartInput.x_labels,
-      datasets: convertChartInputStatsToDataset(chartInput.stats)
+      datasets: datasets
     }
 
     this.chart.options = displayWonTieLost ? getStackedBarChartOptions(this.title) : getGroupedBarChartOptions(this.title);
@@ -210,7 +228,6 @@ class ChartInput {
     this.x_labels = x_labels
     this.stats = stats
     /*
-      title = "title"
       x_labels = ["player 1", "player 2", "player 3", "player 4"]
       stats = {
         "Goals": [4,5,6,9],

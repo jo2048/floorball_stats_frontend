@@ -166,5 +166,6 @@ document.getElementById("create-chart-button").addEventListener("click", async (
     const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
     const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers, seasonsSorted);
     await chartContainer.display()
+    chartContainer.canvas.scrollIntoView()
   }
 })
