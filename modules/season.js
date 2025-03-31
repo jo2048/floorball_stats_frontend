@@ -29,7 +29,7 @@ class Season {
   static findSeasonByDate(date) {
     if (!this._instances)
       throw new Error("This method cannot be called before initializing list of seasons")
-    return Array.from(this._instances.values()).find(s => s.startDate >= date && s.endDate < date)
+    return Array.from(this._instances.values()).find(s => s.startDate <= date && s.endDate > date)
   }
 
   static async getSeasonById(seasonId) {
