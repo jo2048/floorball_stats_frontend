@@ -93,7 +93,7 @@ class ChartContainer {
     `);
 
     this.div.querySelector(`#expand-btn-${this.id}`).addEventListener("click", () => {
-      this.div.style.minWidth = "600px"
+      this.div.style.minWidth = "768px"
       this.div.querySelector(`#expand-btn-${this.id}`).style.display = "none"
     })
 

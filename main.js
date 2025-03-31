@@ -1,12 +1,7 @@
-import { testSafari } from "./modules/exclude_safari.js";
-
 import { Season } from "./modules/season.js";
 import { Player } from "./modules/player.js";
 import { searchPlayerByName, fetchTeamPlayers } from "./modules/fetch_player_data.js";
 import { ChartContainer, fillSelect } from "./modules/display.js";
-
-
-testSafari()
 
 
 const seasonSelect = document.getElementById("season-select")
@@ -145,18 +140,18 @@ document.getElementById("player-pool-select-all-button").addEventListener("click
 })
 
 document.getElementById("player-pool-remove-unselected-button").addEventListener("click", () => {
-  playerInPool.entries()
-    .filter(([_, v]) => v.getAttribute("class") != "badge text-bg-success")
-    .forEach(([k, v]) => {
+  playerInPool.forEach(([k, v]) => {
+    if (v.getAttribute("status") != "selected") {
       v.remove()
       playerInPool.delete(k)
-    })
+    }
+  })
 })
 
 function getSelectedPlayersIds() {
-  return Array.from(playerInPool.entries()
+  return Array.from(playerInPool.entries())
     .filter(([_, v]) => v.getAttribute("status") == "selected")
-    .map(([k, _]) => k))
+    .map(([k, _]) => k)
 }
 
 document.getElementById("create-chart-button").addEventListener("click", async () => {
