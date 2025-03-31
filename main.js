@@ -140,12 +140,12 @@ document.getElementById("player-pool-select-all-button").addEventListener("click
 })
 
 document.getElementById("player-pool-remove-unselected-button").addEventListener("click", () => {
-  playerInPool.forEach(([k, v]) => {
-    if (v.getAttribute("status") != "selected") {
+  Array.from(playerInPool.entries())
+    .filter(([_, v]) => v.getAttribute("status") != "selected")
+    .forEach(([k, v]) => {
       v.remove()
       playerInPool.delete(k)
-    }
-  })
+    })
 })
 
 function getSelectedPlayersIds() {
@@ -161,6 +161,5 @@ document.getElementById("create-chart-button").addEventListener("click", async (
     const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
     const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers, seasonsSorted);
     await chartContainer.display()
-    chartContainer.canvas.scrollIntoView()
   }
 })

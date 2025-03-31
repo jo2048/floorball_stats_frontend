@@ -129,6 +129,17 @@ class ChartContainer {
       seasonSelect.addEventListener("change", () => this.display())
     }
 
+    this.div.insertAdjacentHTML('beforeend', `
+      <div class="d-flex justify-content-center">
+        <div class="spinner-border" id="load-spinner-${this.id}" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>`
+    )
+
+    this.loadSpinner = this.div.querySelector(`#load-spinner-${this.id}`)
+    this.loadSpinner.style.display = "none"
+
     this.canvas = document.createElement("canvas")
     this.chart = new Chart(this.canvas , {
       type: "bar"
@@ -152,6 +163,9 @@ class ChartContainer {
   }
 
   async display() {
+    this.loadSpinner.style.display = "block"
+    this.div.scrollIntoView()
+
     var displayWonTieLost = !document.getElementById(`stats-btn-${this.id}`).checked
     var statsToDisplay = []
     document.getElementById(`games-played-checkbox-${this.id}`).disabled = false
@@ -217,6 +231,8 @@ class ChartContainer {
 
     this.chart.options = displayWonTieLost ? getStackedBarChartOptions(this.title) : getGroupedBarChartOptions(this.title);
     this.chart.update()
+    this.loadSpinner.style.display = "none"
+    this.div.scrollIntoView()
   }
 
 }

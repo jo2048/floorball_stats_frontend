@@ -26,7 +26,7 @@ class Season {
     return game.tournament.season.id === this.id
   }
 
-  static getSeasonByDate(date) {
+  static findSeasonByDate(date) {
     if (!this._instances)
       throw new Error("This method cannot be called before initializing list of seasons")
     return this._instances.values().find(s => s.startDate >= date && s.endDate < date)
