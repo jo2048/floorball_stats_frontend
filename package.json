@@ -4,6 +4,6 @@
   },
   "devDependencies": {
     "typescript": "^5.8.2",
-    "@types/chart.js": "^4.0.0"
+    "chartjs": "^4.4.1"
   }
 }
