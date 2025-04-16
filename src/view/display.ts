@@ -1,10 +1,8 @@
 import { type CompetitionLevel, GameCollection, type Stats } from "../model/game.js"
 import type { Player } from "../model/player.js";
 import { Season } from "../model/season.js";
-import { type ChartOptions, type Chart as ChartType } from "chart.js";
-
-declare const Chart: any;
-declare const ChartDataLabels: typeof import("chartjs-plugin-datalabels")
+import { type ChartOptions, Chart} from "chart.js";
+import  ChartDataLabels from "chartjs-plugin-datalabels";
 
 Chart.register(ChartDataLabels);
 
@@ -51,7 +49,7 @@ class ChartContainer {
   div: HTMLDetailsElement
   canvas: HTMLCanvasElement
   loadSpinner: HTMLDivElement
-  chart!: ChartType
+  chart!: Chart
 
   constructor(parent: HTMLElement, players: Array<Player>, sortedSeasons: Array<Season>) {
     this.id = ChartContainer.#getNextId()
