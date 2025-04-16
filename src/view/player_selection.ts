@@ -19,9 +19,9 @@ const playersCountBadge = document.getElementById("selected-players-button-count
 
 
 async function initPage(): Promise<void> {
-  const seasonsSorted = await Season.getSeasonsSorted()
+  const sortedSeasons = await Season.getSeasonsSorted()
   
-  fillSelect(seasonSelect, seasonsSorted)
+  fillSelect(seasonSelect, sortedSeasons)
   seasonSelect.addEventListener("change", async () => {
     const clubs = await Season.fetchSeasonClubs(parseInt(seasonSelect.value))
     fillSelect(clubSelect, clubs)
@@ -89,7 +89,7 @@ async function initPage(): Promise<void> {
 
     if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
       const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
-      const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers, seasonsSorted);
+      const chartContainer = new ChartContainer(document.getElementById("chartsDiv"), selectedPlayers);
       await chartContainer.display()
     }
   })

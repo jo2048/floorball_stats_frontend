@@ -52,11 +52,16 @@ class Season {
     }
   }
 
+  
+  static compare(s1: Season, s2: Season): number {
+    return s2.startDate.getTime() - s1.startDate.getTime()
+  }
+
   static async getSeasonsSorted(): Promise<Array<Season>> {
     if (!this._instances) {
       await this.fetchAllSeasons();
     }
-    return Array.from(this._instances.values()).sort((s1, s2) => s2.startDate.getTime() - s1.startDate.getTime())
+    return Array.from(this._instances.values()).toSorted(this.compare)
   }
 
   async fetchClubs(): Promise<Array<any>> {

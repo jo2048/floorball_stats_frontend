@@ -41,21 +41,15 @@ const colors: {[key: string]: string} = {
 class ChartContainer {
   static nextId = 0;
 
-  id: number;
-  sortedSeasons: Array<Season>
-  parent: HTMLElement
-  players: Array<Player>
+  id: number
   title: string
   div: HTMLDetailsElement
   canvas: HTMLCanvasElement
   loadSpinner: HTMLDivElement
   chart!: Chart
 
-  constructor(parent: HTMLElement, players: Array<Player>, sortedSeasons: Array<Season>) {
+  constructor(readonly parent: HTMLElement, readonly players: Array<Player>) {
     this.id = ChartContainer.#getNextId()
-    this.parent = parent
-    this.players = players
-    this.sortedSeasons = sortedSeasons
     this.title = this.players.slice(0, Math.min(3, this.players.length)).map(p => p.getNameFormatted()).join(", ") + (3 >= this.players.length ? "" : ", ...")
     this.init()
   }
@@ -135,10 +129,12 @@ class ChartContainer {
       )
 
       const seasonSelect: HTMLSelectElement = parametersDiv.querySelector(`#season-select-${this.id}`)
-      fillSelect(seasonSelect, this.sortedSeasons)
-  
-      this.div.querySelector(`#season-checkbox-${this.id}`).addEventListener("click", () => {
-        seasonSelect.style.display = (this.div.querySelector(`#season-checkbox-${this.id}`) as HTMLInputElement).checked ? "block" : "none"
+      const seasonCheckbox: HTMLInputElement = parametersDiv.querySelector(`#season-checkbox-${this.id}`)
+
+      seasonCheckbox.addEventListener("click", async () => {
+        seasonSelect.style.display = seasonCheckbox.checked ? "block" : "none"
+        const seasons = await this.#getDistinctSeasons()
+        fillSelect(seasonSelect, Array.from(seasons).toSorted(Season.compare))
       })
       seasonSelect.addEventListener("change", () => this.display())
     }
@@ -160,7 +156,7 @@ class ChartContainer {
     })
     this.div.appendChild(this.canvas)
 
-    this.div.querySelectorAll("input").forEach(e => e.addEventListener("click", () => this.display()));
+    this.div.querySelectorAll("input").forEach(e => e.addEventListener("change", () => this.display()));
     parametersDiv.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.div.remove())
     this.parent.appendChild(this.div)
   }
@@ -174,6 +170,11 @@ class ChartContainer {
       return playersGames[0].getStatsGroupedBy(groupingCriterion)
     
     return playersGames.map(gc => [gc.player, gc.computeStats()])
+  }
+
+  async #getDistinctSeasons(): Promise<Set<Season>> {
+    const allGames = await Promise.all(this.players.map(async p => (await GameCollection.loadPlayerGameCollection(p))))
+    return new Set(allGames.flatMap(gc => Array.from(gc.getDistinctSeasons())))
   }
 
   async display() {
@@ -215,7 +216,6 @@ class ChartContainer {
     const sortedStats = this.players.length != 1
       ? playersStats.sort((a1, a2) => a1[1].games_played - a2[1].games_played)
       : playersStats.sort((a1, a2) => a1[1].startDate - a2[1].startDate)
-
     
     var chartInput: ChartInput = {
       xLabels: sortedStats.map(([p, _]) => p.getNameFormatted()),
@@ -339,7 +339,7 @@ function getStackedBarChartOptions(title: string): ChartOptions {
   }
 }
 
-function fillSelect(select: HTMLSelectElement, values: any) {
+function fillSelect(select: HTMLSelectElement, values: Array<any>) {
   select.querySelectorAll("option").forEach(e => e.remove())
   for (const elt of values) {
     const opt = document.createElement("option");

@@ -127,6 +127,10 @@ class GameCollection {
     return new GameCollection(this.player, Array.from(this.games.filter(g => g.getSeason() == season)))
   }
 
+  getDistinctSeasons(): Set<Season> {
+    return new Set(this.games.map(g => g.getSeason()))
+  }
+
   groupGamesBy(competitionLevel: CompetitionLevel) {
     const groupingFunction = competitionLevel == "SEASON" ? (game: Game) => game.getSeason() : (game: Game) => game.tournament
     const groups = new Map()
