@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    // "allowJs": true,
+    "target": "ES2023",      
+    // "checkJs": true,
+    // "sourceMap": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    // "moduleResolution": "nodenext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    // "strict": true
+    // "types": ["chart.js"]
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}

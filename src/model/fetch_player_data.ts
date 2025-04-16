@@ -1,6 +1,6 @@
-import { Config } from "./config.js";
+import { Config } from "../view/config.js";
 
-async function searchPlayerByName(playerName) {
+async function searchPlayerByName(playerName: string) {
   const url = Config.getBaseUrl() + "public_players_get.php";
   const payload = { text: playerName, command: "search" };
   try {
@@ -20,19 +20,14 @@ async function searchPlayerByName(playerName) {
       delete player.photo;
     }
     return [response.status, json];
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching player data: ${error.message}`);
     return [500, null];
   }
 }
 
 // command = get or match
-async function fetchPlayerData(playerId, command) {
-  if (!playerId)
-    throw new Error(
-      "Invalid argument to fetch playerData : playerId = ",
-      playerId
-    );
+async function fetchPlayerData(playerId: number, command: string) {
   const url = Config.getBaseUrl() + "public_players_get.php";
   const payload = { id: playerId, command: command };
   try {
@@ -50,17 +45,15 @@ async function fetchPlayerData(playerId, command) {
     delete json.clublogo;
     delete json.photo;
     return [response.status, json];
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching player data: ${error.message}`);
     return [500, null];
   }
 }
 
-async function fetchTeamPlayers(teamId) {
-  if (!teamId)
-    throw new Error("Invalid argument to fetch playerData : teamId = ", teamId);
+async function fetchTeamPlayers(teamId: number) {
   const url = Config.getBaseUrl() + "public_players_get.php";
-  const payload = { id: parseInt(teamId), command: "team" };
+  const payload = { id: teamId, command: "team" };
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -76,7 +69,7 @@ async function fetchTeamPlayers(teamId) {
     delete json.clublogo;
     delete json.photo;
     return [response.status, json];
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching player data: ${error.message}`);
     return [500, null];
   }

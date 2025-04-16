@@ -1,6 +1,6 @@
 ## Floorball stats
 
-HTML / CSS / JAVASCRIPT frontend to draw charts from data fetched from https://www.floorballbelgium.be/
+HTML / CSS / TYPESCRIPT frontend to draw charts from data fetched from https://www.floorballbelgium.be/
 
 Hosted with cloudflare pages https://belgium-floorball-stats.pages.dev/
 
