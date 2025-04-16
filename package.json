@@ -3,7 +3,10 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "typescript": "^5.8.2",
-    "chartjs": "^4.4.1"
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.1",
+    "chartjs-plugin-datalabels": "^2.2.0"
   }
 }
