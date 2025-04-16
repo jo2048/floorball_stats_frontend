@@ -8,8 +8,8 @@ class Config {
     static country = "BELGIUM"
     // static country = "FRANCE"
 
-    static getBaseUrl() {
-        return BASE_URLS[this.country]
+    static getBaseUrl(): string {
+        return "https://www.floorballbelgium.be/api/"
     }
     
 }

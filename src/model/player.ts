@@ -1,15 +1,12 @@
-import { fetchPlayerData } from "./fetch_player_data.js";
+import { fetchPlayerData } from "./fetch_player_data.js"
 
 class Player {
-  static cache = new Map();
+  private static cache: Map<number, Player> = new Map();
 
-  constructor(playerId, playerName, birthdate, sex, teamId, clubName) {
-    this.id = playerId;
-    this.name = playerName;
+  readonly birthdate: Date;
+
+  constructor(readonly id: number, readonly name: string, birthdate: Date, public sex: string, public teamId: number, public clubName: string) {
     this.birthdate = new Date(birthdate);
-    this.sex = sex;
-    this.teamId = teamId;
-    this.clubName = clubName;
   }
 
   getAge() {
@@ -27,7 +24,7 @@ class Player {
     return this.name;
   }
 
-  static registerPlayer(playerData) {
+  static registerPlayer(playerData: any) {
     const playerId = playerData.id;
     if (!this.cache.has(playerId))
       this.cache.set(
@@ -44,7 +41,7 @@ class Player {
     return this.cache.get(playerId);
   }
 
-  static async getPlayerById(playerId) {
+  static async getPlayerById(playerId: number) {
     if (!this.cache.has(playerId)) {
       const [, playerData] = await fetchPlayerData(playerId, "get");
       this.registerPlayer(playerData);

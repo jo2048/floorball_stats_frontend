@@ -1,42 +1,33 @@
-import { Config } from "./config.js";
+import { Config } from "../view/config.js";
 import { Season } from "./season.js";
 
+
 class Tournament {
-  static cache = new Map([
-    [-1, new Tournament(-1, "Empty tournament", new Season(-1, "Empty season", "Empty division"))],
-    [null, new Tournament(-1, "Empty tournament", new Season(-1, "Empty season", "Empty division"))]
+  static emptyTournament = new Tournament(-1, "Empty tournament", new Season(-1, "Empty season"), "Empty division")
+  private static cache: Map<number | string, Tournament> = new Map([
+    [-1, this.emptyTournament],
+    [null, this.emptyTournament]
   ]);
 
-  constructor(tournamentId, name, season, division) {
-    if (!tournamentId || !name || !season)
-      throw new Error("Illegal argument exception while trying to build tournament")
-    this.id = tournamentId;
-    this.name = name;
-    this.season = season;
-    this.division = division;
-  }
-
-  containsGame(game) {
-    return game.tournamentId = this.id
-  }
+  constructor(readonly id: number, readonly name: string, readonly season: Season, readonly division: string) { }
 
   getNameFormatted() {
     return [this.season.getNameFormatted(), this.name.replace(/\[.*\]/, '').trim()]
   }
 
-  static async #delay(milliseconds){
+  static async #delay(milliseconds: number){
     return new Promise(resolve => {
       setTimeout(resolve, milliseconds);
     });
   }
 
-  static async getTournamentById(tournamentId) {
+  static async getTournamentById(tournamentId: number) {
     if (tournamentId === undefined)
-      throw new Error("Invalid argument to get tournament : tournamentId=", tournamentId)
+      throw new Error("Invalid argument to get tournament : tournamentId=" + tournamentId)
     while (this.cache.has("wait-for-"+tournamentId))
       await this.#delay(250)
     if (!this.cache.has(tournamentId)) {
-      this.cache.set("wait-for-"+tournamentId, "wait")
+      this.cache.set("wait-for-"+tournamentId, null)
       const [_, tournamentData] = await fetchTournament(tournamentId);
       const season = await Season.getSeasonById(tournamentData["season_id"]);
       this.cache.delete("wait-for-"+tournamentId)
@@ -46,7 +37,7 @@ class Tournament {
   }
 }
 
-async function fetchTournament(tournamentId) {
+async function fetchTournament(tournamentId: number): Promise<[number, any]> {
   const url = Config.getBaseUrl() + "public_tournament_get.php";
   const payload = { id: tournamentId, command: "get" };
   try {

@@ -1,11 +1,14 @@
-import { Config } from "./config.js";
+import { Config } from "../view/config.js";
+
 
 class Season {
-  static _instances = null;
+  static _instances: Map<number, Season> = null;
 
-  constructor(seasonId, seasonName) {
-    this.id = seasonId;
-    this.name = seasonName;
+  readonly startDate: Date
+  readonly endDate: Date
+  clubs?: Array<any>
+
+  constructor(readonly id: number, readonly name: string) {
     const re = new RegExp("^\\d{4}-\\d{2}$");
     if (!re.test(this.name)) {
       this.startDate = new Date(parseInt(this.name.split(" ")[1].slice(0, 4)), 7, 1);
@@ -22,21 +25,17 @@ class Season {
     return this.name.slice(-9);
   }
 
-  containsGame(game) {
-    return game.tournament.season.id === this.id
-  }
-
-  static findSeasonByDate(date) {
+  static findSeasonByDate(date: Date) {
     if (!this._instances)
       throw new Error("This method cannot be called before initializing list of seasons")
     return Array.from(this._instances.values()).find(s => s.startDate <= date && s.endDate > date)
   }
 
-  static async getSeasonById(seasonId) {
+  static async getSeasonById(seasonId: number) {
     if (this._instances === null) {
       await this.fetchAllSeasons();
     }
-    return this._instances.get(parseInt(seasonId));
+    return this._instances.get(seasonId);
   }
 
   static async fetchAllSeasons() {
@@ -47,20 +46,20 @@ class Season {
         throw new Error(`Response status: ${response.status}`);
       }
       const json = await response.json();
-      this._instances = new Map(json.map((seasonData) => [seasonData.id, new Season(seasonData.id, seasonData.name)]))
-    } catch (error) {
+      this._instances = new Map(json.map((seasonData: any) => [seasonData.id, new Season(seasonData.id, seasonData.name)]))
+    } catch (error: any) {
       console.error(error.message);
     }
   }
 
-  static async getSeasonsSorted() {
+  static async getSeasonsSorted(): Promise<Array<Season>> {
     if (!this._instances) {
       await this.fetchAllSeasons();
     }
-    return Array.from(this._instances.values()).sort((s1, s2) => s2.startDate - s1.startDate)
+    return Array.from(this._instances.values()).sort((s1, s2) => s2.startDate.getTime() - s1.startDate.getTime())
   }
 
-  async fetchClubs() {
+  async fetchClubs(): Promise<Array<any>> {
     if (this.clubs == null) {
       const url = Config.getBaseUrl() + "public_clubs_getall.php";
       const payload = { seasonid: this.id };
@@ -78,22 +77,22 @@ class Season {
         delete json.logo
         delete json.photo;
         this.clubs = json
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error: ${error.message}`);
-        return [500, null];
+        return [500];
       }
     }
     return this.clubs
   }
 
-  static async fetchSeasonClubs(seasonId) {
+  static async fetchSeasonClubs(seasonId: number): Promise<Array<any>> {
     if (!seasonId)
       throw new Error("Invalid argument to fetch clubs")
     const season = await this.getSeasonById(seasonId)
     return season.fetchClubs()
   }
 
-  static async fetchTeamsBySeasonAndClub(seasonId, clubId) {
+  static async fetchTeamsBySeasonAndClub(seasonId: number, clubId: number): Promise<[number, Array<unknown>]> {
     const url = Config.getBaseUrl() + "public_teams_byclubbyseason.php"
     const payload = { seasonid: seasonId, clubid: clubId };
     try {
@@ -106,7 +105,7 @@ class Season {
       }
       const json = await response.json();
       return [response.status, json];
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error: ${error.message}`);
       return [500, null];
     }

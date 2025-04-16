@@ -1,11 +1,25 @@
 import { fetchPlayerData } from "./fetch_player_data.js";
 import { Tournament } from "./tournament.js";
 import { Season } from "./season.js";
+import { Player } from "./player.js";
+
+type CompetitionLevel = "SEASON" | "TOURNAMENT"
+type GameOutcome =  "TIE" | "WON" | "LOST"
 
 class Game {
-  constructor(data, tournament) {
+  readonly id: number
+  readonly roundId: number
+  readonly isPlayed: boolean
+  readonly teamAwayId: number
+  readonly teamHomeId: number
+  readonly scoreHome: number;
+  readonly scoreAway: number;
+  readonly sporthallId: number;
+  readonly date: Date;
+  readonly time: string;
+
+  constructor(data: any, readonly tournament: Tournament) {
     this.id = data["id"];
-    this.tournament = tournament;
     this.roundId = data["round_id"];
     this.isPlayed = data["is_played"];
     this.teamAwayId = data["team_away_id"];
@@ -17,7 +31,7 @@ class Game {
     this.time = data["time"];
   }
 
-  getSeason() {
+  getSeason(): Season {
     if (this.tournament.id && this.tournament.id >= 0)
       return this.tournament.season
     else
@@ -26,7 +40,14 @@ class Game {
 }
 
 class PlayerGame extends Game {
-  constructor(data, tournament) {
+  playerId: number;
+  playerTeamId: number;
+  playerGoals: number;
+  playerAssists: number;
+  playerFaults: number;
+  playerMvp: number;
+  playerNumber: number;
+  constructor(data: any, tournament: Tournament) {
     super(data, tournament);
     this.playerId = data["player"]["id"];
     this.playerTeamId = data["player"]["teamid"];
@@ -37,7 +58,7 @@ class PlayerGame extends Game {
     this.playerNumber = data["player"]["number"];
   }
 
-  isWon() {
+  isWon(): GameOutcome {
     if (this.scoreHome === this.scoreAway) return "TIE";
 
     const isHome = this.playerTeamId === this.teamHomeId;
@@ -46,38 +67,46 @@ class PlayerGame extends Game {
     return (homeWon && isHome) || (!homeWon && !isHome) ? "WON" : "LOST";
   }
 
-  static async createFromData(data) {
+  static async createFromData(data: any) {
     const tournament = await Tournament.getTournamentById(data["competition_id"])
     return new PlayerGame(data, tournament)
   }
 }
 
-function uniqBy(a, key) {
+function uniqBy<T>(a: Array<T>, key: any): Array<T> {
   return [
       ...new Map(
-          a.map(x => [key(x), x])
+          a.map((x: any) => [key(x), x])
       ).values()
   ]
 }
 
-class GameCollection {
-  static gamesByPlayerCache = new Map() 
+interface Stats {
+  games_played: number,
+  goals: number,
+  assists: number,
+  faults: number,
+  won: number
+  tie: number
+  lost: number
+}
 
-  constructor(player, games) {
-    if (!player || !games)
-      throw new Error("Invalid argument exception when trying to create GameCollection")
+class GameCollection {
+  private static gamesByPlayerCache: Map<number, Array<PlayerGame>> = new Map() 
+  player: Player;
+  games: Array<PlayerGame>;
+
+  constructor(player: Player, games: Array<PlayerGame>) {
     this.player = player
     this.games = games
   }
 
-  getStatsGroupedBy(competitionLevel) {
-    if (!["SEASON", "TOURNAMENT"].includes(competitionLevel))
-      throw new Error("Invalid argument exception")
+  getStatsGroupedBy(competitionLevel: CompetitionLevel) {
     const groups = this.groupGamesBy(competitionLevel)
     return Array.from(groups.entries()).map(([k, v]) => [k, new GameCollection(this.player, v).computeStats()])
   }
 
-  computeStats() {
+  computeStats(): Stats {
     const gamesPlayedCount = this.getGamesPlayedCount()
     const goalsCount = this.getGoalsCount()
     const assistsCount = this.getAssistsCount()
@@ -94,12 +123,12 @@ class GameCollection {
     }
   }
 
-  filterOnSeason(season) {
+  filterOnSeason(season: Season): GameCollection {
     return new GameCollection(this.player, Array.from(this.games.filter(g => g.getSeason() == season)))
   }
 
-  groupGamesBy(competitionLevel) {
-    const groupingFunction = competitionLevel == "SEASON" ? (game) => game.getSeason() : (game) => game.tournament
+  groupGamesBy(competitionLevel: CompetitionLevel) {
+    const groupingFunction = competitionLevel == "SEASON" ? (game: Game) => game.getSeason() : (game: Game) => game.tournament
     const groups = new Map()
     for (const game of this.games) {
       const groupingKey = groupingFunction(game)
@@ -119,7 +148,7 @@ class GameCollection {
   }
 
   getGamesPlayedCount() {
-    return this.games.filter((g) => g.isPlayed == 1).length;
+    return this.games.filter((g) => g.isPlayed).length;
   }
 
   getFaultsCount() {
@@ -127,23 +156,23 @@ class GameCollection {
   }
 
   getWonTieLostCount() {
-    const count = new Map([
+    const count: Map<GameOutcome, number> = new Map([
       ["WON", 0],
       ["TIE", 0],
       ["LOST", 0],
     ]);
-    this.games.forEach((g) => count.set(g.isWon(), count.get(g.isWon()) + 1));
+    this.games.forEach(g => count.set(g.isWon(), count.get(g.isWon()) + 1));
     return count;
   }
 
-  static async loadPlayerGameCollection(player) {
+  static async loadPlayerGameCollection(player:Player) {
     if (!this.gamesByPlayerCache.has(player.id)) {
       const [, matches] = await fetchPlayerData(player.id, "match")
-      const games = await Promise.all(matches.list_match.map(async data => await PlayerGame.createFromData(data)))
-      this.gamesByPlayerCache.set(player.id, uniqBy(games, (g) => g.id))
+      const games = await Promise.all(matches.list_match.map(async (data: any) => await PlayerGame.createFromData(data)))
+      this.gamesByPlayerCache.set(player.id, uniqBy(games, (g: Game) => g.id))
     }
     return new GameCollection(player, this.gamesByPlayerCache.get(player.id)) 
   }
 }
 
-export { PlayerGame, GameCollection };
+export { PlayerGame, GameCollection, CompetitionLevel, Stats };

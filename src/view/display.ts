@@ -1,10 +1,15 @@
-import { GameCollection } from "./game.js"
-import { Season } from "./season.js";
+import { type CompetitionLevel, GameCollection, type Stats } from "../model/game.js"
+import type { Player } from "../model/player.js";
+import { Season } from "../model/season.js";
+import { type ChartOptions, type Chart as ChartType } from "chart.js";
+
+declare const Chart: any;
+declare const ChartDataLabels: typeof import("chartjs-plugin-datalabels")
 
 Chart.register(ChartDataLabels);
 
 
-const absoluteStatFunctions = {
+const absoluteStatFunctions: {[key: string]: (p: Stats) => number} = {
   "Games played": p => p.games_played,
   "Goals": p => p.goals,
   "Assists": p => p.assists,
@@ -14,7 +19,8 @@ const absoluteStatFunctions = {
   "Tie": p => p.tie
 }
 
-const ratioStatFunction = {
+
+const ratioStatFunction:{[key: string]: (p: Stats) => number} = {
   "Games played": p => p.games_played == 0 ? 0 : 1,
   "Goals": p => p.games_played == 0 ? 0 : p.goals / p.games_played,
   "Assists": p => p.games_played == 0 ? 0 : p.assists / p.games_played,
@@ -24,7 +30,7 @@ const ratioStatFunction = {
   "Tie": p => p.games_played == 0 ? 0 : p.tie / p.games_played
 }
 
-const colors = {
+const colors: {[key: string]: string} = {
   "Games played": "rgba(54, 162, 235, 0.5)",
   "Goals": "rgba(7, 130, 7, 0.5)",
   "Assists": "rgba(230, 197, 12, 0.5)",
@@ -37,16 +43,26 @@ const colors = {
 class ChartContainer {
   static nextId = 0;
 
-  constructor(parent, players, sortedSeasons) {
+  id: number;
+  sortedSeasons: Array<Season>
+  parent: HTMLElement
+  players: Array<Player>
+  title: string
+  div: HTMLDetailsElement
+  canvas: HTMLCanvasElement
+  loadSpinner: HTMLDivElement
+  chart!: ChartType
+
+  constructor(parent: HTMLElement, players: Array<Player>, sortedSeasons: Array<Season>) {
     this.id = ChartContainer.#getNextId()
-    this.sortedSeasons = sortedSeasons
     this.parent = parent
     this.players = players
+    this.sortedSeasons = sortedSeasons
     this.title = this.players.slice(0, Math.min(3, this.players.length)).map(p => p.getNameFormatted()).join(", ") + (3 >= this.players.length ? "" : ", ...")
     this.init()
   }
 
-  static #getNextId() {
+  static #getNextId(): number {
     this.nextId += 1
     return this.nextId
   }
@@ -54,7 +70,7 @@ class ChartContainer {
   init() {
     this.div = document.createElement("details")
     this.div.classList.add("chart-container")
-    this.div.setAttribute("open", true)
+    this.div.setAttribute("open", "true")
     const chartSummary = document.createElement("summary")
     chartSummary.textContent = this.title
     this.div.appendChild(chartSummary)
@@ -93,8 +109,8 @@ class ChartContainer {
     `);
 
     this.div.querySelector(`#expand-btn-${this.id}`).addEventListener("click", () => {
-      this.div.style.minWidth = "768px"
-      this.div.querySelector(`#expand-btn-${this.id}`).style.display = "none"
+      this.div.style.minWidth = "768px";
+      (this.div.querySelector(`#expand-btn-${this.id}`) as HTMLButtonElement).style.display = "none";
     })
 
     const parametersDiv = this.div.querySelector(`#parameters-div-${this.id}`)
@@ -120,11 +136,11 @@ class ChartContainer {
         </div>`
       )
 
-      const seasonSelect = parametersDiv.querySelector(`#season-select-${this.id}`)
+      const seasonSelect: HTMLSelectElement = parametersDiv.querySelector(`#season-select-${this.id}`)
       fillSelect(seasonSelect, this.sortedSeasons)
   
       this.div.querySelector(`#season-checkbox-${this.id}`).addEventListener("click", () => {
-        seasonSelect.style.display = this.div.querySelector(`#season-checkbox-${this.id}`).checked ? "block" : "none"
+        seasonSelect.style.display = (this.div.querySelector(`#season-checkbox-${this.id}`) as HTMLInputElement).checked ? "block" : "none"
       })
       seasonSelect.addEventListener("change", () => this.display())
     }
@@ -142,7 +158,7 @@ class ChartContainer {
 
     this.canvas = document.createElement("canvas")
     this.chart = new Chart(this.canvas , {
-      type: "bar"
+      type: "bar", data: { datasets: []}
     })
     this.div.appendChild(this.canvas)
 
@@ -151,7 +167,7 @@ class ChartContainer {
     this.parent.appendChild(this.div)
   }
 
-  async #getPlayersStats(filterSeason, groupingCriterion) {
+  async #getPlayersStats(filterSeason: Season, groupingCriterion: CompetitionLevel) {
     const playersGames = await Promise.all(this.players.map(async p => (await GameCollection.loadPlayerGameCollection(p))))
     if (filterSeason != null) 
       return playersGames.map(gc => gc.filterOnSeason(filterSeason)).map(gc => [gc.player, gc.computeStats()])
@@ -166,33 +182,35 @@ class ChartContainer {
     this.loadSpinner.style.display = "block"
     this.div.scrollIntoView()
 
-    var displayWonTieLost = !document.getElementById(`stats-btn-${this.id}`).checked
-    var statsToDisplay = []
-    document.getElementById(`games-played-checkbox-${this.id}`).disabled = false
+    var displayWonTieLost = !(document.getElementById(`stats-btn-${this.id}`) as HTMLInputElement).checked;
+    const subparams = this.div.querySelector("#subparams") as HTMLDivElement
+    var statsToDisplay: Array<string> = [];
+    (document.getElementById(`games-played-checkbox-${this.id}`) as HTMLInputElement).disabled = false
     if (!displayWonTieLost) {
-      this.div.querySelector("#subparams").removeAttribute("style")
-      if (document.getElementById(`games-played-checkbox-${this.id}`).checked)
+      subparams.removeAttribute("style")
+      if ((document.getElementById(`games-played-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Games played")
-      if (document.getElementById(`goals-checkbox-${this.id}`).checked)
+      if ((document.getElementById(`goals-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Goals")
-      if (document.getElementById(`assists-checkbox-${this.id}`).checked)
+      if ((document.getElementById(`assists-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Assists")
-      if (document.getElementById(`faults-checkbox-${this.id}`).checked)
+      if ((document.getElementById(`faults-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Faults")
     } else {
-      this.div.querySelector("#subparams").style.display = "none"
+      subparams.style.display = "none"
       statsToDisplay = ["Lost", "Tie", "Won"]
     }
 
-    const statFunctions = document.getElementById(`ratio-checkbox-${this.id}`).checked ? ratioStatFunction : absoluteStatFunctions
+    const ratioCheckbox = this.div.querySelector(`#ratio-checkbox-${this.id}`) as HTMLInputElement
+    const statFunctions = ratioCheckbox.checked ? ratioStatFunction : absoluteStatFunctions
 
     
-    const seasonFilter = (this.players.length != 1 && this.div.querySelector(`#season-checkbox-${this.id}`).checked) 
-      ? await Season.getSeasonById(this.div.querySelector(`#season-select-${this.id}`).value) 
+    const seasonFilter = (this.players.length != 1 && (this.div.querySelector(`#season-checkbox-${this.id}`) as HTMLInputElement).checked) 
+      ? await Season.getSeasonById(parseInt((this.div.querySelector(`#season-select-${this.id}`) as HTMLSelectElement).value)) 
       : null 
 
     const groupingKey = this.players.length == 1
-      ? (this.div.querySelector(`#group-season-btn-${this.id}`).checked ? "SEASON" : "TOURNAMENT")
+      ? ((this.div.querySelector(`#group-season-btn-${this.id}`) as HTMLInputElement).checked ? "SEASON" : "TOURNAMENT")
       : null
     const playersStats = await this.#getPlayersStats(seasonFilter, groupingKey)
     
@@ -201,10 +219,10 @@ class ChartContainer {
       : playersStats.sort((a1, a2) => a1[1].startDate - a2[1].startDate)
 
     
-    var chartInput = new ChartInput(
-      sortedStats.map(([p, _]) => p.getNameFormatted()),
-      Object.fromEntries(statsToDisplay.map(statType => [statType, sortedStats.map(([_, stats]) => statFunctions[statType](stats))]))
-    )
+    var chartInput: ChartInput = {
+      xLabels: sortedStats.map(([p, _]) => p.getNameFormatted()),
+      stats: Object.fromEntries(statsToDisplay.map(statType => [statType, sortedStats.map(([_, stats]) => statFunctions[statType](stats))]))
+    }
 
     let datasets = convertChartInputStatsToDataset(chartInput.stats)
     // datasets.push({
@@ -225,7 +243,7 @@ class ChartContainer {
     // })
 
     this.chart.data = {
-      labels: chartInput.x_labels,
+      labels: chartInput.xLabels,
       datasets: datasets
     }
 
@@ -237,23 +255,14 @@ class ChartContainer {
 
 }
 
-class ChartInput {
-  constructor(x_labels, stats) {
-    if (!x_labels || !stats)
-      throw new Error("Invalid arguments for ChartInput")
-    this.x_labels = x_labels
-    this.stats = stats
-    /*
-      x_labels = ["player 1", "player 2", "player 3", "player 4"]
-      stats = {
-        "Goals": [4,5,6,9],
-        "Assists": [2,8,3,0]
-      }
-    */
+interface ChartInput {
+  xLabels: Array<string>
+  stats: {
+    [key: string]: Array<number>
   }
 }
 
-function convertChartInputStatsToDataset(stats) {
+function convertChartInputStatsToDataset(stats: {[key: string]: Array<number>}) {
 return Array.from(
   Object.entries(stats).map(([stat_type, stat_array]) => {
     return {
@@ -266,11 +275,11 @@ return Array.from(
   }))
 }
 
-function roundNumber(number) {
+function roundNumber(number: number) {
   return Math.round(number * 100 + Number.EPSILON ) / 100
 }
 
-function getCommonBarChartOptions(title) {
+function getCommonBarChartOptions(title: string): ChartOptions {
   return {
     responsive: true,
     plugins: {
@@ -289,7 +298,7 @@ function getCommonBarChartOptions(title) {
         // font: {
         //     weight: 'bold',
         // },
-        formatter: function (value, context) {
+        formatter: function (value: number, context: any) {
           return value == 0 ? "" : roundNumber(value); // Display the actual data value
         },
       },
@@ -297,7 +306,7 @@ function getCommonBarChartOptions(title) {
   }
 }
 
-function getGroupedBarChartOptions(title) {
+function getGroupedBarChartOptions(title: string): ChartOptions {
   return {
     scales: {
       x: {
@@ -312,7 +321,7 @@ function getGroupedBarChartOptions(title) {
   }
 } 
 
-function getStackedBarChartOptions(title) {
+function getStackedBarChartOptions(title: string): ChartOptions {
   return {
     scales: {
       x: {
@@ -332,7 +341,7 @@ function getStackedBarChartOptions(title) {
   }
 }
 
-function fillSelect(select, values) {
+function fillSelect(select: HTMLSelectElement, values: any) {
   select.querySelectorAll("option").forEach(e => e.remove())
   for (const elt of values) {
     const opt = document.createElement("option");
