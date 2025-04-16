@@ -15,12 +15,6 @@ class Player {
   }
 
   getNameFormatted() {
-    if (this.name === "Y. H.") {
-      return "Helenus\nYanis";
-    }
-    if (this.name === "L. G.") {
-      return "Gignez\nLoic";
-    }
     return this.name;
   }
 

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./built",
+    "outDir": "./dist",
     // "allowJs": true,
     "target": "ES2023",      
     // "checkJs": true,
@@ -8,7 +8,7 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     // "moduleResolution": "nodenext",
-    "module": "ES6",
+    "module": "ESNext",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,

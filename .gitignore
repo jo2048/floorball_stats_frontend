@@ -1,3 +1,5 @@
 .vscode
 data
-built
+dist
+node_modules
+public

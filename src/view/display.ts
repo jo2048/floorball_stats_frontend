@@ -1,8 +1,8 @@
 import { type CompetitionLevel, GameCollection, type Stats } from "../model/game.js"
 import type { Player } from "../model/player.js";
 import { Season } from "../model/season.js";
-import { type ChartOptions, Chart} from "chart.js";
-import  ChartDataLabels from "chartjs-plugin-datalabels";
+import { type ChartOptions, Chart} from "chart.js/auto";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
 Chart.register(ChartDataLabels);
 
