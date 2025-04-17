@@ -1,6 +1,8 @@
 {
   "scripts": {
-    "build": "tsc && esbuild dist/main.js --bundle --outfile=public/bundle.js --format=esm --minify --target=chrome135,firefox133,safari18.3"
+    "build": "tsc && esbuild dist/main.js --bundle --outfile=public/bundle.js --define:__COUNTRY__='\"BELGIUM\"' --format=esm --minify --target=chrome135,firefox133,safari18.3",
+    "build:france": "tsc && esbuild dist/main.js --bundle --outfile=public/bundle.js --define:__COUNTRY__='\"FRANCE\"' --format=esm --minify --target=chrome135,firefox133,safari18.3",
+    "build:local": "tsc && esbuild dist/main.js --bundle --outfile=public/bundle.js --define:__COUNTRY__='\"BELGIUM\"' --format=esm --sourcemap --target=chrome135,firefox133,safari18.3"
   },
   "devDependencies": {
     "esbuild": "^0.25.2",

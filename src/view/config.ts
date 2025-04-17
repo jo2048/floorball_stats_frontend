@@ -1,17 +1,36 @@
 
-const BASE_URLS = {
-    "BELGIUM": "https://www.floorballbelgium.be/api/",
-    "FRANCE": "https://visu.floorball.fr/api/"
+interface CountryConfig {
+    baseUrl: string,
+    title: string,
+    originalSiteUrl: string,
+    originalSiteName: string
 }
 
-class Config {
-    static country = "BELGIUM"
-    // static country = "FRANCE"
-
-    static getBaseUrl(): string {
-        return "https://www.floorballbelgium.be/api/"
+const CONFIGS: Record<string, CountryConfig> = {
+    "BELGIUM": {
+        baseUrl: "https://www.floorballbelgium.be/api/",
+        title: "Belgian floorball statistics",
+        originalSiteUrl: "https://www.floorballbelgium.be/",
+        originalSiteName: "the BFF official site" 
+    },
+    "FRANCE": {
+        baseUrl: "https://visu.floorball.fr/api/",
+        title: "French floorball statistics",
+        originalSiteUrl: "https://visu.floorball.fr/fr",
+        originalSiteName: "visu.floorball.fr"
     }
-    
+}
+
+declare const __COUNTRY__: string;
+
+class Config {
+    static instance: CountryConfig = null
+
+    static getInstance() {
+        if (!this.instance)
+            this.instance = CONFIGS[__COUNTRY__]
+        return this.instance
+    }
 }
 
 export { Config }

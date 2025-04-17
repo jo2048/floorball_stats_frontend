@@ -1,7 +1,7 @@
 import { Config } from "../view/config.js";
 
 async function searchPlayerByName(playerName: string) {
-  const url = Config.getBaseUrl() + "public_players_get.php";
+  const url = Config.getInstance().baseUrl + "public_players_get.php";
   const payload = { text: playerName, command: "search" };
   try {
     const response = await fetch(url, {
@@ -28,7 +28,7 @@ async function searchPlayerByName(playerName: string) {
 
 // command = get or match
 async function fetchPlayerData(playerId: number, command: string) {
-  const url = Config.getBaseUrl() + "public_players_get.php";
+  const url = Config.getInstance().baseUrl + "public_players_get.php";
   const payload = { id: playerId, command: command };
   try {
     const response = await fetch(url, {
@@ -52,7 +52,7 @@ async function fetchPlayerData(playerId: number, command: string) {
 }
 
 async function fetchTeamPlayers(teamId: number) {
-  const url = Config.getBaseUrl() + "public_players_get.php";
+  const url = Config.getInstance().baseUrl + "public_players_get.php";
   const payload = { id: teamId, command: "team" };
   try {
     const response = await fetch(url, {

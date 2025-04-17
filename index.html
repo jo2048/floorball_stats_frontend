@@ -8,15 +8,15 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link rel="stylesheet" href="./style.css">
   <link rel="shortcut icon" href="#">
-  <title>Belgian floorball statistics</title>
+  <title class="main-title">Floorball statistics</title>
 </head>
 
 <body">
   <nav class="navbar bg-dark bg-body-tertiary" data-bs-theme="dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">
+      <a class="navbar-brand main-title" href="#">
         <img src="/pictures/logo-2.webp" alt=" " width="36" height="36" class="d-inline-block align-text-center">
-        Belgian floorball statistics
+        Floorball statistics
       </a>
       <ul class="navbar-nav flex-row flex-wrap ms-md-auto">
         <li class="nav-item col-6 col-lg-auto">
@@ -31,7 +31,7 @@
   <main class="container-fluid d-flex justify-content-center">
     <div class="col-12 col-xl-11">
       <div class="main-div">
-        This page retrieves data from <a href="https://www.floorballbelgium.be/">the BFF official site</a> and uses it to draw charts. 
+        This page retrieves data from <a id="source-site-link" href="https://www.floorballbelgium.be/">the BFF official site</a> and uses it to draw charts. 
         </br></br>
         <b>How to use</b></br>
         <ol>
@@ -98,7 +98,7 @@
     <div class="modal fade modal-fullscreen" id="chart-modal" tabindex="-1" aria-labelledby="chart-modal-label" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen">
         <div class="modal-content">
-          <div class="modal-header bg-primary">
+          <div class="modal-header bg-primary-subtle">
             <h5 class="modal-title fs-5" id="chart-modal-label">Chart</h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>

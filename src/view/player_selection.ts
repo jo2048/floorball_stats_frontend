@@ -173,8 +173,8 @@ function updateCreateChartButton() {
       btn.classList.add("btn-success")
     });
     playersPoolDiv.querySelectorAll(".selected-players-badge").forEach(e => {
-      e.classList.remove("btn-danger")
-      e.classList.add("btn-success")
+      e.classList.remove("bg-danger")
+      e.classList.add("bg-success")
     });
   }
   else {
@@ -184,8 +184,8 @@ function updateCreateChartButton() {
       btn.classList.add("btn-secondary")
     });
     playersPoolDiv.querySelectorAll(".selected-players-badge").forEach(e => {
-      e.classList.remove("btn-success")
-      e.classList.add("btn-danger")
+      e.classList.remove("bg-success")
+      e.classList.add("bg-danger")
     });
   }
 

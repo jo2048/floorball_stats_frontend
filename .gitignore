@@ -3,3 +3,5 @@ data
 dist
 node_modules
 public
+build_version_france.bash
+version_france

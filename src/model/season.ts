@@ -39,7 +39,7 @@ class Season {
   }
 
   static async fetchAllSeasons() {
-    const url = Config.getBaseUrl() + "public_season_getall.php";
+    const url = Config.getInstance().baseUrl + "public_season_getall.php";
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -66,7 +66,7 @@ class Season {
 
   async fetchClubs(): Promise<Array<any>> {
     if (this.clubs == null) {
-      const url = Config.getBaseUrl() + "public_clubs_getall.php";
+      const url = Config.getInstance().baseUrl + "public_clubs_getall.php";
       const payload = { seasonid: this.id };
       try {
         const response = await fetch (url, {
@@ -98,7 +98,7 @@ class Season {
   }
 
   static async fetchTeamsBySeasonAndClub(seasonId: number, clubId: number): Promise<[number, Array<unknown>]> {
-    const url = Config.getBaseUrl() + "public_teams_byclubbyseason.php"
+    const url = Config.getInstance().baseUrl + "public_teams_byclubbyseason.php"
     const payload = { seasonid: seasonId, clubid: clubId };
     try {
       const response = await fetch (url, {

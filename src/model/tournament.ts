@@ -38,7 +38,7 @@ class Tournament {
 }
 
 async function fetchTournament(tournamentId: number): Promise<[number, any]> {
-  const url = Config.getBaseUrl() + "public_tournament_get.php";
+  const url = Config.getInstance().baseUrl + "public_tournament_get.php";
   const payload = { id: tournamentId, command: "get" };
   try {
     const response = await fetch (url, {
