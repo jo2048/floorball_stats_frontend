@@ -43,7 +43,7 @@ class ChartContainer {
 
   id: number
   title: string
-  div: HTMLDetailsElement
+  div: HTMLDivElement
   canvas: HTMLCanvasElement
   loadSpinner: HTMLDivElement
   chart!: Chart
@@ -60,55 +60,45 @@ class ChartContainer {
   }
 
   init() {
-    this.div = document.createElement("details")
-    this.div.classList.add("chart-container")
-    this.div.setAttribute("open", "true")
-    const chartSummary = document.createElement("summary")
-    chartSummary.textContent = this.title
-    this.div.appendChild(chartSummary)
+    this.div = document.createElement("div")
+    // this.div.classList.add("chart-container")
+    this.div.classList.add("container-fluid")
+    this.div.classList.add("my-3")
+
+    this.parent.appendChild(this.div)
     
     this.div.insertAdjacentHTML("beforeend", `
-      <div class="container-fluid my-3" id="parameters-div-${this.id}">
-        <div class="row">
-          <div id="main-parameters-div-${this.id}" class="col-9 d-flex flex-wrap flex-row gap-2 align-self-start">
-            <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-              <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off" checked/>
-              <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
-              <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off"/>
-              <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
-            </div>
-            <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-              <input type="checkbox" class="btn-check" id="ratio-checkbox-${this.id}" autocomplete="off">
-              <label class="btn btn-outline-success" for="ratio-checkbox-${this.id}">Ratios</label>
-            </div>
-            <div id="subparams" class="btn-group flex-wrap" role="group" aria-label="Basic checkbox toggle button group">
-              <input type="checkbox" class="btn-check" name="games_played" id="games-played-checkbox-${this.id}" checked autocomplete="off"/>
-              <label class="btn btn-outline-success" for="games-played-checkbox-${this.id}">Games played</label>
-              <input type="checkbox" class="btn-check" name="goals" id="goals-checkbox-${this.id}" checked autocomplete="off"/>
-              <label class="btn btn-outline-success" for="goals-checkbox-${this.id}">Goals</label>
-              <input type="checkbox" class="btn-check" name="assists" id="assists-checkbox-${this.id}" checked autocomplete="off"/>
-              <label class="btn btn-outline-success" for="assists-checkbox-${this.id}">Assists</label>
-              <input type="checkbox"  class="btn-check" name="faults" id="faults-checkbox-${this.id}" checked autocomplete="off"/>
-              <label class="btn btn-outline-success" for="faults-checkbox-${this.id}">Faults</label>
-            </div>
+      <div class="row">
+        <div id="main-parameters-div-${this.id}" class="col-10 d-flex flex-wrap flex-row gap-2 align-self-start">
+          <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+            <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off" checked/>
+            <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
+            <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off"/>
+            <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
           </div>
-          <div class="col-3 gap-2 d-flex flex-row flex-wrap justify-content-end align-self-end">
-            <button class="btn btn-warning align-self-end d-md-none" id="expand-btn-${this.id}">Expand chart</button>
-            <button class="btn btn-danger align-self-end" id="delete-btn-${this.id}">Delete chart</button>
+          <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+            <input type="checkbox" class="btn-check" id="ratio-checkbox-${this.id}" autocomplete="off">
+            <label class="btn btn-outline-success" for="ratio-checkbox-${this.id}">Ratios</label>
+          </div>
+          <div id="subparams" class="btn-group flex-wrap" role="group" aria-label="Basic checkbox toggle button group">
+            <input type="checkbox" class="btn-check" name="games_played" id="games-played-checkbox-${this.id}" checked autocomplete="off"/>
+            <label class="btn btn-outline-success" for="games-played-checkbox-${this.id}">Games played</label>
+            <input type="checkbox" class="btn-check" name="goals" id="goals-checkbox-${this.id}" checked autocomplete="off"/>
+            <label class="btn btn-outline-success" for="goals-checkbox-${this.id}">Goals</label>
+            <input type="checkbox" class="btn-check" name="assists" id="assists-checkbox-${this.id}" checked autocomplete="off"/>
+            <label class="btn btn-outline-success" for="assists-checkbox-${this.id}">Assists</label>
+            <input type="checkbox"  class="btn-check" name="faults" id="faults-checkbox-${this.id}" checked autocomplete="off"/>
+            <label class="btn btn-outline-success" for="faults-checkbox-${this.id}">Faults</label>
           </div>
         </div>
-      </div>     
+        <div class="col-2 d-flex justify-content-end align-self-end">
+          <button class="btn btn-danger align-self-end d-none d-lg-block" id="delete-btn-${this.id}">Delete chart</button>
+        </div>
+      </div>
     `);
 
-    this.div.querySelector(`#expand-btn-${this.id}`).addEventListener("click", () => {
-      this.div.style.minWidth = "768px";
-      (this.div.querySelector(`#expand-btn-${this.id}`) as HTMLButtonElement).style.display = "none";
-    })
-
-    const parametersDiv = this.div.querySelector(`#parameters-div-${this.id}`)
-
     if ((this.players.length == 1)) {
-      parametersDiv.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
+      this.div.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
         <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
           <input type="radio" id="group-season-btn-${this.id}" class="btn-check" name="grouping-radio${this.id}" autocomplete="off" checked/>
           <label class="btn btn-outline-primary" for="group-season-btn-${this.id}">Group by season</label>
@@ -118,7 +108,7 @@ class ChartContainer {
       )
     }
     else {
-      parametersDiv.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
+      this.div.querySelector(`#main-parameters-div-${this.id}`).insertAdjacentHTML('beforeend',`
         <div class="gap-2 d-inline-flex flex-row" id="season-filter-group-${this.id}">
           <input type="checkbox" class="btn-check" id="season-checkbox-${this.id}" autocomplete="off">
           <label class="btn btn-outline-success" for="season-checkbox-${this.id}">Filter by season</label>
@@ -128,8 +118,8 @@ class ChartContainer {
         </div>`
       )
 
-      const seasonSelect: HTMLSelectElement = parametersDiv.querySelector(`#season-select-${this.id}`)
-      const seasonCheckbox: HTMLInputElement = parametersDiv.querySelector(`#season-checkbox-${this.id}`)
+      const seasonSelect: HTMLSelectElement = this.div.querySelector(`#season-select-${this.id}`)
+      const seasonCheckbox: HTMLInputElement = this.div.querySelector(`#season-checkbox-${this.id}`)
 
       seasonCheckbox.addEventListener("click", async () => {
         seasonSelect.style.display = seasonCheckbox.checked ? "block" : "none"
@@ -157,8 +147,7 @@ class ChartContainer {
     this.div.appendChild(this.canvas)
 
     this.div.querySelectorAll("input").forEach(e => e.addEventListener("change", () => this.display()));
-    parametersDiv.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.div.remove())
-    this.parent.appendChild(this.div)
+    this.div.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.parent.remove())
   }
 
   async #getPlayersStats(filterSeason: Season, groupingCriterion: CompetitionLevel) {
@@ -179,7 +168,6 @@ class ChartContainer {
 
   async display() {
     this.loadSpinner.style.display = "block"
-    this.div.scrollIntoView()
 
     var displayWonTieLost = !(document.getElementById(`stats-btn-${this.id}`) as HTMLInputElement).checked;
     const subparams = this.div.querySelector("#subparams") as HTMLDivElement
@@ -248,7 +236,6 @@ class ChartContainer {
     this.chart.options = displayWonTieLost ? getStackedBarChartOptions(this.title) : getGroupedBarChartOptions(this.title);
     this.chart.update()
     this.loadSpinner.style.display = "none"
-    this.div.scrollIntoView()
   }
 
 }
