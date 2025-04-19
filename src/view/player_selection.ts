@@ -105,6 +105,8 @@ async function initPage(): Promise<void> {
       modal.show()
       const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
       const chartContainer = new ChartContainer(document.getElementById("chart-modal-body"), selectedPlayers);
+      
+      document.getElementById("chart-modal-label").textContent = selectedPlayersIds.length == 1 ? "Chart - " + chartContainer.title : "Chart"
       await chartContainer.display()
     }
   })

@@ -68,7 +68,7 @@ class ChartContainer {
     this.parent.appendChild(this.div)
     
     this.div.insertAdjacentHTML("beforeend", `
-      <div class="row">
+      <div class="row mb-3">
         <div id="main-parameters-div-${this.id}" class="col-10 d-flex flex-wrap flex-row gap-2 align-self-start">
           <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
             <input type="radio" id="stats-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off" checked/>
@@ -272,10 +272,10 @@ function getCommonBarChartOptions(title: string): ChartOptions {
         display: true,
         position: "top"
       },
-      title: {
-        display: title != null,
-        text: title
-      },
+      // title: {
+      //   display: title != null,
+      //   text: title
+      // },
       datalabels: {
         anchor: "center", // Position of the labels (start, end, center, etc.)
         align: "center", // Alignment of the labels (start, end, center, etc.)
