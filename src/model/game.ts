@@ -67,6 +67,16 @@ class PlayerGame extends Game {
     return (homeWon && isHome) || (!homeWon && !isHome) ? "WON" : "LOST";
   }
 
+  getGoalsByTeam() {
+    const isHome = this.playerTeamId === this.teamHomeId;
+    return isHome ? this.scoreHome : this.scoreAway;
+  }
+
+  getGoalsConceded() {
+    const isHome = this.playerTeamId === this.teamHomeId;
+    return isHome ? this.scoreAway : this.scoreHome;
+  }
+
   static async createFromData(data: any) {
     const tournament = await Tournament.getTournamentById(data["competition_id"])
     return new PlayerGame(data, tournament)
@@ -82,24 +92,21 @@ function uniqBy<T>(a: Array<T>, key: any): Array<T> {
 }
 
 interface Stats {
-  games_played: number,
+  gamesPlayed: number,
   goals: number,
   assists: number,
   faults: number,
   won: number
   tie: number
   lost: number
+  goalsByTeam: number,
+  goalsConceded: number
 }
 
 class GameCollection {
   private static gamesByPlayerCache: Map<number, Array<PlayerGame>> = new Map() 
-  player: Player;
-  games: Array<PlayerGame>;
 
-  constructor(player: Player, games: Array<PlayerGame>) {
-    this.player = player
-    this.games = games
-  }
+  constructor(readonly player: Player, readonly games: Array<PlayerGame>) {}
 
   getStatsGroupedBy(competitionLevel: CompetitionLevel) {
     const groups = this.groupGamesBy(competitionLevel)
@@ -107,19 +114,17 @@ class GameCollection {
   }
 
   computeStats(): Stats {
-    const gamesPlayedCount = this.getGamesPlayedCount()
-    const goalsCount = this.getGoalsCount()
-    const assistsCount = this.getAssistsCount()
-    const faultsCount = this.getFaultsCount()
     const wonTieLostCount = this.getWonTieLostCount()
     return {
-      games_played: gamesPlayedCount,
-      goals: goalsCount,
-      assists: assistsCount,
-      faults: faultsCount,
+      gamesPlayed: this.getGamesPlayedCount(),
+      goals: this.getGoalsCount(),
+      assists: this.getAssistsCount(),
+      faults:  this.getFaultsCount(),
       won: wonTieLostCount.get("WON"),
       tie: wonTieLostCount.get("TIE"),
-      lost: wonTieLostCount.get("LOST")
+      lost: wonTieLostCount.get("LOST"),
+      goalsByTeam: this.getGoalsByTeamCount(),
+      goalsConceded: this.getGoalsConcededCount()
     }
   }
 
@@ -159,6 +164,14 @@ class GameCollection {
     return this.games.reduce((sum, g) => sum + g.playerFaults, 0);
   }
 
+  getGoalsConcededCount() {
+    return this.games.reduce((sum, g) => sum + g.getGoalsConceded(), 0);
+  }
+
+  getGoalsByTeamCount() {
+    return this.games.reduce((sum, g) => sum + g.getGoalsByTeam(), 0);
+  }
+
   getWonTieLostCount() {
     const count: Map<GameOutcome, number> = new Map([
       ["WON", 0],
@@ -179,4 +192,4 @@ class GameCollection {
   }
 }
 
-export { PlayerGame, GameCollection, CompetitionLevel, Stats };
+export { PlayerGame, GameCollection, GameOutcome, CompetitionLevel, Stats };

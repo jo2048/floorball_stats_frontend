@@ -15,3 +15,13 @@ Hosted with cloudflare pages https://belgium-floorball-stats.pages.dev/
 
 This project does not follow any good practice (no unit test, etc.) and is only a side project i started with the goal to improve my skills and knowledge in web development.
 
+
+- pie chart won, tie, lost
+- total goals from other team
+- pie chart assits received
+- pie chart given assists
+
+- pie chart other team scorers
+
+- ratio own goals / goals from his team
+- ratio

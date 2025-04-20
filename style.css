@@ -20,6 +20,18 @@ canvas {
   border: solid 2px;
 }
 
+#modal-body {
+  overflow-x: auto;
+}
+
+#single-player-div {
+  border: 1px black;
+}
+
+.chart-modal-body {
+  min-width: 768px;
+}
+
 span {
   box-sizing: border-box;
 }

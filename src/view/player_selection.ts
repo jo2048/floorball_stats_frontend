@@ -1,7 +1,8 @@
 import { Season } from "../model/season.js"
 import { Player } from "../model/player.js"
-import { ChartContainer, fillSelect } from "./display.js"
+import { ChartContainer, fillSelect } from "./display_bar_chart.js"
 import { fetchTeamPlayers, searchPlayerByName } from "../model/fetch_player_data.js"
+import { PlayerCardsView } from "./player_cards_view.js";
 
 declare const bootstrap: any;
 
@@ -91,6 +92,7 @@ async function initPage(): Promise<void> {
 
     if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
       createCollapsibleChart(selectedPlayersIds)
+      selectedPlayersIds.forEach(id => PlayerCardsView.createSinglePlayerCard(id))
     }
   })
 
@@ -107,6 +109,7 @@ async function initPage(): Promise<void> {
       const chartContainer = new ChartContainer(document.getElementById("chart-modal-body"), selectedPlayers);
       
       document.getElementById("chart-modal-label").textContent = selectedPlayersIds.length == 1 ? "Chart - " + chartContainer.title : "Chart"
+      selectedPlayersIds.forEach(id => PlayerCardsView.createSinglePlayerCard(id))
       await chartContainer.display()
     }
   })

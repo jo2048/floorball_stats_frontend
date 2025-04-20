@@ -27,6 +27,17 @@ const CONFIGS: Record<string, CountryConfig> = {
     }
 }
 
+const COLORS: {[key: string]: string} = {
+    "Games played": "rgba(54, 162, 235, 0.5)",
+    "Goals": "rgba(7, 130, 7, 0.5)",
+    "Assists": "rgba(230, 197, 12, 0.5)",
+    "Faults": "rgba(236, 2, 2, 0.5)",
+    "Won": "rgba(7, 130, 7, 0.5)",
+    "Lost": "rgba(236, 10, 10, 0.5)",
+    "Tie": "rgba(54, 162, 235, 0.5)"
+  }
+  
+
 declare const __COUNTRY__: string;
 
 class Config {
@@ -39,4 +50,4 @@ class Config {
     }
 }
 
-export { Config }
+export { Config, COLORS }

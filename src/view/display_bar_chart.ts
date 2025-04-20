@@ -2,13 +2,11 @@ import { type CompetitionLevel, GameCollection, type Stats } from "../model/game
 import type { Player } from "../model/player.js";
 import { Season } from "../model/season.js";
 import { type ChartOptions, Chart} from "chart.js/auto";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-
-Chart.register(ChartDataLabels);
+import { COLORS } from "./config.js";
 
 
 const absoluteStatFunctions: {[key: string]: (p: Stats) => number} = {
-  "Games played": p => p.games_played,
+  "Games played": p => p.gamesPlayed,
   "Goals": p => p.goals,
   "Assists": p => p.assists,
   "Faults": p => p.faults,
@@ -17,26 +15,16 @@ const absoluteStatFunctions: {[key: string]: (p: Stats) => number} = {
   "Tie": p => p.tie
 }
 
-
 const ratioStatFunction:{[key: string]: (p: Stats) => number} = {
-  "Games played": p => p.games_played == 0 ? 0 : 1,
-  "Goals": p => p.games_played == 0 ? 0 : p.goals / p.games_played,
-  "Assists": p => p.games_played == 0 ? 0 : p.assists / p.games_played,
-  "Faults": p => p.games_played == 0 ? 0 : p.faults / p.games_played,
-  "Won": p => p.games_played == 0 ? 0 : p.won / p.games_played,
-  "Lost": p => p.games_played == 0 ? 0 : p.lost / p.games_played,
-  "Tie": p => p.games_played == 0 ? 0 : p.tie / p.games_played
+  "Games played": p => p.gamesPlayed == 0 ? 0 : 1,
+  "Goals": p => p.gamesPlayed == 0 ? 0 : p.goals / p.gamesPlayed,
+  "Assists": p => p.gamesPlayed == 0 ? 0 : p.assists / p.gamesPlayed,
+  "Faults": p => p.gamesPlayed == 0 ? 0 : p.faults / p.gamesPlayed,
+  "Won": p => p.gamesPlayed == 0 ? 0 : p.won / p.gamesPlayed,
+  "Lost": p => p.gamesPlayed == 0 ? 0 : p.lost / p.gamesPlayed,
+  "Tie": p => p.gamesPlayed == 0 ? 0 : p.tie / p.gamesPlayed
 }
 
-const colors: {[key: string]: string} = {
-  "Games played": "rgba(54, 162, 235, 0.5)",
-  "Goals": "rgba(7, 130, 7, 0.5)",
-  "Assists": "rgba(230, 197, 12, 0.5)",
-  "Faults": "rgba(236, 2, 2, 0.5)",
-  "Won": "rgba(7, 130, 7, 0.5)",
-  "Lost": "rgba(236, 10, 10, 0.5)",
-  "Tie": "rgba(54, 162, 235, 0.5)"
-}
 
 class ChartContainer {
   static nextId = 0;
@@ -62,8 +50,7 @@ class ChartContainer {
   init() {
     this.div = document.createElement("div")
     // this.div.classList.add("chart-container")
-    this.div.classList.add("container-fluid")
-    this.div.classList.add("my-3")
+    this.div.classList.add("container-fluid", "my-3")
 
     this.parent.appendChild(this.div)
     
@@ -81,7 +68,7 @@ class ChartContainer {
             <label class="btn btn-outline-success" for="ratio-checkbox-${this.id}">Ratios</label>
           </div>
           <div id="subparams" class="btn-group flex-wrap" role="group" aria-label="Basic checkbox toggle button group">
-            <input type="checkbox" class="btn-check" name="games_played" id="games-played-checkbox-${this.id}" checked autocomplete="off"/>
+            <input type="checkbox" class="btn-check" name="gamesPlayed" id="games-played-checkbox-${this.id}" checked autocomplete="off"/>
             <label class="btn btn-outline-success" for="games-played-checkbox-${this.id}">Games played</label>
             <input type="checkbox" class="btn-check" name="goals" id="goals-checkbox-${this.id}" checked autocomplete="off"/>
             <label class="btn btn-outline-success" for="goals-checkbox-${this.id}">Goals</label>
@@ -169,9 +156,9 @@ class ChartContainer {
   async display() {
     this.loadSpinner.style.display = "block"
 
-    var displayWonTieLost = !(document.getElementById(`stats-btn-${this.id}`) as HTMLInputElement).checked;
+    let displayWonTieLost = !(document.getElementById(`stats-btn-${this.id}`) as HTMLInputElement).checked;
     const subparams = this.div.querySelector("#subparams") as HTMLDivElement
-    var statsToDisplay: Array<string> = [];
+    let statsToDisplay: Array<string> = [];
     (document.getElementById(`games-played-checkbox-${this.id}`) as HTMLInputElement).disabled = false
     if (!displayWonTieLost) {
       subparams.removeAttribute("style")
@@ -202,31 +189,15 @@ class ChartContainer {
     const playersStats = await this.#getPlayersStats(seasonFilter, groupingKey)
     
     const sortedStats = this.players.length != 1
-      ? playersStats.sort((a1, a2) => a1[1].games_played - a2[1].games_played)
+      ? playersStats.sort((a1, a2) => a1[1].gamesPlayed - a2[1].gamesPlayed)
       : playersStats.sort((a1, a2) => a1[1].startDate - a2[1].startDate)
     
-    var chartInput: ChartInput = {
+    let chartInput: ChartInput = {
       xLabels: sortedStats.map(([p, _]) => p.getNameFormatted()),
       stats: Object.fromEntries(statsToDisplay.map(statType => [statType, sortedStats.map(([_, stats]) => statFunctions[statType](stats))]))
     }
 
-    let datasets = convertChartInputStatsToDataset(chartInput.stats)
-    // datasets.push({
-    //   label: 'Dataset 2',
-    //   data: Array(this.players.length).fill(1),
-    //   backgroundColor: "blue",
-    //   borderColor: "blue",
-    //   borderWidth: .5,
-    //   pointRadius: Array(this.players.length).fill(0),
-    //   type: 'line',
-    //   order: 0,
-    //   datalabels: {
-    //     labels: {
-    //       title: null
-    //     }
-
-    //   }
-    // })
+    const datasets = convertChartInputStatsToDataset(chartInput.stats)
 
     this.chart.data = {
       labels: chartInput.xLabels,
@@ -252,7 +223,7 @@ return Array.from(
   Object.entries(stats).map(([stat_type, stat_array]) => {
     return {
       label: stat_type,
-      backgroundColor: colors[stat_type],
+      backgroundColor: COLORS[stat_type],
       // borderColor: "red",
       // borderWidth: 1,
       data: stat_array
