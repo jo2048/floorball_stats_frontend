@@ -20,7 +20,7 @@ canvas {
   border: solid 2px;
 }
 
-#modal-body {
+.modal-body {
   overflow-x: auto;
 }
 
@@ -28,7 +28,7 @@ canvas {
   border: 1px black;
 }
 
-.chart-modal-body {
+#chart-modal-body {
   min-width: 768px;
 }
 

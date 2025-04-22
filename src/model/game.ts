@@ -100,7 +100,8 @@ interface Stats {
   tie: number
   lost: number
   goalsByTeam: number,
-  goalsConceded: number
+  goalsConceded: number,
+  participationRateInGoals: number
 }
 
 class GameCollection {
@@ -114,6 +115,9 @@ class GameCollection {
   }
 
   computeStats(): Stats {
+    const goals = this.getGoalsCount()
+    const assists = this.getAssistsCount()
+    const goalsByTeam = this.getGoalsByTeamCount()
     const wonTieLostCount = this.getWonTieLostCount()
     return {
       gamesPlayed: this.getGamesPlayedCount(),
@@ -123,8 +127,9 @@ class GameCollection {
       won: wonTieLostCount.get("WON"),
       tie: wonTieLostCount.get("TIE"),
       lost: wonTieLostCount.get("LOST"),
-      goalsByTeam: this.getGoalsByTeamCount(),
-      goalsConceded: this.getGoalsConcededCount()
+      goalsByTeam: goalsByTeam,
+      goalsConceded: this.getGoalsConcededCount(),
+      participationRateInGoals: goalsByTeam == 0 ? 0 : (goals + assists) / goalsByTeam
     }
   }
 
@@ -192,4 +197,4 @@ class GameCollection {
   }
 }
 
-export { PlayerGame, GameCollection, GameOutcome, CompetitionLevel, Stats };
+export { PlayerGame, GameCollection as GameCollection, GameOutcome, CompetitionLevel, Stats };

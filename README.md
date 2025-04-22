@@ -25,3 +25,6 @@ This project does not follow any good practice (no unit test, etc.) and is only 
 
 - ratio own goals / goals from his team
 - ratio
+
+
+problem with https://www.floorballbelgium.be/en/players/1000712 -> error 500

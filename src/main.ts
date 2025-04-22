@@ -9,7 +9,7 @@ const _ = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(
 
 
 // CONFIG CHARTJS
-import { Chart} from "chart.js/auto";
+import { Chart } from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { PlayerCardsView } from "./view/player_cards_view.js";
 
