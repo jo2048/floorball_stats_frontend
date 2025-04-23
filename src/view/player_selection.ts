@@ -3,9 +3,7 @@ import { Player } from "../model/player.js"
 import { ChartContainer } from "./chart_container.js"
 import { fetchTeamPlayers, searchPlayerByName } from "../model/fetch_player_data.js"
 import { PlayerCardsView } from "./player_cards_view.js";
-import { fillSelect } from "./utils.js";
-
-declare const bootstrap: any;
+import { fillSelect, Modal } from "./utils.js";
 
 const seasonSelect = document.getElementById("season-select") as HTMLSelectElement
 const clubSelect = document.getElementById("club-select") as HTMLSelectElement
@@ -92,7 +90,7 @@ async function initPage(): Promise<void> {
     const selectedPlayersIds = getSelectedPlayersIds()
 
     if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
-      createCollapsibleChart(selectedPlayersIds)
+      await createCollapsibleChart(selectedPlayersIds)
       selectedPlayersIds.forEach(id => PlayerCardsView.createSinglePlayerCard(id))
     }
   })
@@ -101,17 +99,12 @@ async function initPage(): Promise<void> {
     const selectedPlayersIds = getSelectedPlayersIds()
 
     if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
-      const modal = new bootstrap.Modal(document.getElementById('chart-modal'))
-      document.getElementById("chart-modal-body").childNodes.forEach(element => {
-        element.remove()
-      });
-      modal.show()
       const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
-      const chartContainer = new ChartContainer(document.getElementById("chart-modal-body"), selectedPlayers);
-      
-      document.getElementById("chart-modal-label").textContent = selectedPlayersIds.length == 1 ? "Chart - " + chartContainer.title : "Chart"
-      selectedPlayersIds.forEach(id => PlayerCardsView.createSinglePlayerCard(id))
+      const chartContainer = new ChartContainer(selectedPlayers);
+      Modal.showContent(chartContainer.div)
+      Modal.setText(selectedPlayersIds.length == 1 ? "Chart - " + chartContainer.title : "Chart")
       await chartContainer.display()
+      selectedPlayersIds.forEach(id => PlayerCardsView.createSinglePlayerCard(id))
     }
   })
 
@@ -123,7 +116,10 @@ async function createCollapsibleChart(playerIds: Array<number>) {
   const selectedPlayers = await Promise.all(playerIds.map(async id => await Player.getPlayerById(id)))
 
   const details = document.createElement("details")
-  const chartContainer = new ChartContainer(details, selectedPlayers);
+  const chartContainer = new ChartContainer(selectedPlayers);
+  chartContainer.delete = () => details.remove()
+  details.appendChild(chartContainer.div)
+  //TODO : remove details when deleting chartContainer
   details.classList.add("chart-container")
   details.setAttribute("open", "true")
   const chartSummary = document.createElement("summary")
@@ -148,7 +144,7 @@ function changeStatus(span: HTMLSpanElement, newStatus: string) {
 
 function createPlayerSpan(player: Player) {
   const span = document.createElement("span")
-  span.innerHTML = `${player.name}</br>${player.getAge()} years old</br>${player.clubName}`
+  span.innerHTML = `${player.name}</br>${player.getAge()} years old</br>${player.currentClubName}`
   span.setAttribute("class", "badge text-bg-success")
   span.setAttribute("status", "selected")
   span.addEventListener("click", () => {

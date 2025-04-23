@@ -32,6 +32,11 @@ canvas {
   min-width: 768px;
 }
 
+.loading-spinner {
+  width: 3rem; 
+  height: 3rem;
+}
+
 span {
   box-sizing: border-box;
 }

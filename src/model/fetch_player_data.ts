@@ -119,11 +119,6 @@ interface GetGamePlayerResult {
   "teamid": number
 }
 
-async function getGamePlayers(gameId: number): Promise<Array<number>> {
-  const data = await fetchGamePlayers(gameId)
-  return data[1].map((elt: any) => elt.id)
-}
-
 async function getGamePlayersFilteredByTeam(playerId:number, gameId: number, sameTeam=true): Promise<Array<number>> {
   const data = await fetchGamePlayers(gameId)
   const playerArray = data[1]
@@ -131,4 +126,4 @@ async function getGamePlayersFilteredByTeam(playerId:number, gameId: number, sam
   return playerArray.filter(p => sameTeam ? p.teamid == teamId : p.teamid != teamId).map(p => p.id)
 }
 
-export { searchPlayerByName, fetchPlayerData, fetchTeamPlayers, getGamePlayers, getGamePlayersFilteredByTeam };
+export { searchPlayerByName, fetchPlayerData, fetchTeamPlayers, getGamePlayersFilteredByTeam };

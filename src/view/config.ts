@@ -34,7 +34,9 @@ const COLORS: {[key: string]: string} = {
     "Faults": "rgba(236, 2, 2, 0.5)",
     "Won": "rgba(7, 130, 7, 0.5)",
     "Lost": "rgba(236, 10, 10, 0.5)",
-    "Tie": "rgba(54, 162, 235, 0.5)"
+    "Tie": "rgba(54, 162, 235, 0.5)",
+    "Goals not involved": "rgba(54, 162, 235, 0.5)",
+    "Goals conceded": "rgba(236, 10, 10, 0.5)",
   }
   
 

@@ -1,18 +1,14 @@
 import { initPage } from "./view/player_selection.js";
 import { Config } from "./view/config.js";
-
-// CONFIG TOOLTIPS
-declare var bootstrap: any
-
-const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-const _ = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-
-
-// CONFIG CHARTJS
 import { Chart } from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { PlayerCardsView } from "./view/player_cards_view.js";
+import { configTooltips } from "./view/utils.js";
 
+// CONFIG TOOLTIPS
+configTooltips()
+
+// CONFIG CHARTJS
 Chart.register(ChartDataLabels);
 
 

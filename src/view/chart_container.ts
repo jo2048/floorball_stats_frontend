@@ -3,7 +3,7 @@ import type { Player } from "../model/player.js";
 import { Season } from "../model/season.js";
 import { Chart} from "chart.js/auto";
 import { BarChartInput, getGroupedBarChartOptions, getStackedBarChartOptions } from "./display_bar_chart.js";
-import { fillSelect } from "./utils.js";
+import { fillSelect, Spinner } from "./utils.js";
 
 
 const absoluteStatFunctions: {[key: string]: (p: Stats) => number} = {
@@ -13,19 +13,15 @@ const absoluteStatFunctions: {[key: string]: (p: Stats) => number} = {
   "Faults": p => p.faults,
   "Won": p => p.won,
   "Lost": p => p.lost,
-  "Tie": p => p.tie
+  "Tie": p => p.tie,
+  "Goals by team": p => p.goalsByTeam,
+  "Goals not involved": p => p.goalsByTeam - p.goals - p.assists,
+  "Goals conceded": p => - p.goalsConceded 
 }
 
-const ratioStatFunction:{[key: string]: (p: Stats) => number} = {
-  "Games played": p => p.gamesPlayed == 0 ? 0 : 1,
-  "Goals": p => p.gamesPlayed == 0 ? 0 : p.goals / p.gamesPlayed,
-  "Assists": p => p.gamesPlayed == 0 ? 0 : p.assists / p.gamesPlayed,
-  "Faults": p => p.gamesPlayed == 0 ? 0 : p.faults / p.gamesPlayed,
-  "Won": p => p.gamesPlayed == 0 ? 0 : p.won / p.gamesPlayed,
-  "Lost": p => p.gamesPlayed == 0 ? 0 : p.lost / p.gamesPlayed,
-  "Tie": p => p.gamesPlayed == 0 ? 0 : p.tie / p.gamesPlayed
+function ratioFunction(statType: string, baseStatType: string): (p: Stats) => number {
+  return (stats: Stats) => absoluteStatFunctions[baseStatType](stats) == 0 ? 0 : absoluteStatFunctions[statType](stats) / absoluteStatFunctions[baseStatType](stats) 
 }
-
 
 class ChartContainer {
   static nextId = 0;
@@ -34,10 +30,10 @@ class ChartContainer {
   title: string
   div: HTMLDivElement
   canvas: HTMLCanvasElement
-  loadSpinner: HTMLDivElement
+  loadSpinner: Spinner
   chart!: Chart
 
-  constructor(readonly parent: HTMLElement, readonly players: Array<Player>) {
+  constructor(readonly players: Array<Player>) {
     this.id = ChartContainer.#getNextId()
     this.title = this.players.slice(0, Math.min(3, this.players.length)).map(p => p.getNameFormatted()).join(", ") + (3 >= this.players.length ? "" : ", ...")
     this.init()
@@ -52,8 +48,6 @@ class ChartContainer {
     this.div = document.createElement("div")
     // this.div.classList.add("chart-container")
     this.div.classList.add("container-fluid", "my-3")
-
-    this.parent.appendChild(this.div)
     
     this.div.insertAdjacentHTML("beforeend", `
       <div class="row mb-3">
@@ -63,6 +57,8 @@ class ChartContainer {
             <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
             <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off"/>
             <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
+            <input type="radio" id="goals-participation-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off"/>
+            <label class="btn btn-outline-primary" for="goals-participation-btn-${this.id}">Goals involvement</label>
           </div>
           <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
             <input type="checkbox" class="btn-check" id="ratio-checkbox-${this.id}" autocomplete="off">
@@ -117,16 +113,9 @@ class ChartContainer {
       seasonSelect.addEventListener("change", () => this.display())
     }
 
-    this.div.insertAdjacentHTML('beforeend', `
-      <div class="d-flex justify-content-center">
-        <div class="spinner-border" id="load-spinner-${this.id}" role="status" style="width: 3rem; height: 3rem;">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </div>`
-    )
-
-    this.loadSpinner = this.div.querySelector(`#load-spinner-${this.id}`)
-    this.loadSpinner.style.display = "none"
+    this.loadSpinner = new Spinner()
+    this.div.insertAdjacentElement("beforeend", this.loadSpinner.container)
+    this.loadSpinner.hide()
 
     this.canvas = document.createElement("canvas")
     this.chart = new Chart(this.canvas , {
@@ -135,7 +124,11 @@ class ChartContainer {
     this.div.appendChild(this.canvas)
 
     this.div.querySelectorAll("input").forEach(e => e.addEventListener("change", () => this.display()));
-    this.div.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.parent.remove())
+    this.div.querySelector(`#delete-btn-${this.id}`).addEventListener("click", () => this.delete())
+  }
+
+  delete() {
+    this.div.remove()
   }
 
   async #getPlayersStats(filterSeason: Season, groupingCriterion: CompetitionLevel) {
@@ -155,30 +148,36 @@ class ChartContainer {
   }
 
   async display() {
-    this.loadSpinner.style.display = "block"
+    this.loadSpinner.show()
 
-    let displayWonTieLost = !(document.getElementById(`stats-btn-${this.id}`) as HTMLInputElement).checked;
+    let stackedBarChart = !(this.div.querySelector(`#stats-btn-${this.id}`) as HTMLInputElement).checked;
     const subparams = this.div.querySelector("#subparams") as HTMLDivElement
     let statsToDisplay: Array<string> = [];
-    (document.getElementById(`games-played-checkbox-${this.id}`) as HTMLInputElement).disabled = false
-    if (!displayWonTieLost) {
+    (this.div.querySelector(`#games-played-checkbox-${this.id}`) as HTMLInputElement).disabled = false
+    if ((this.div.querySelector(`#stats-btn-${this.id}`) as HTMLInputElement).checked) {
       subparams.removeAttribute("style")
-      if ((document.getElementById(`games-played-checkbox-${this.id}`) as HTMLInputElement).checked)
+      if ((this.div.querySelector(`#games-played-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Games played")
-      if ((document.getElementById(`goals-checkbox-${this.id}`) as HTMLInputElement).checked)
+      if ((this.div.querySelector(`#goals-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Goals")
-      if ((document.getElementById(`assists-checkbox-${this.id}`) as HTMLInputElement).checked)
+      if ((this.div.querySelector(`#assists-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Assists")
-      if ((document.getElementById(`faults-checkbox-${this.id}`) as HTMLInputElement).checked)
+      if ((this.div.querySelector(`#faults-checkbox-${this.id}`) as HTMLInputElement).checked)
         statsToDisplay.push("Faults")
     } else {
       subparams.style.display = "none"
-      statsToDisplay = ["Lost", "Tie", "Won"]
-    }
+      if ((this.div.querySelector(`#won-tie-lost-btn-${this.id}`) as HTMLInputElement).checked) 
+        statsToDisplay = ["Lost", "Tie", "Won"];
+      else
+        statsToDisplay = ["Goals not involved", "Assists", "Goals", "Goals conceded"];
+    } 
 
     const ratioCheckbox = this.div.querySelector(`#ratio-checkbox-${this.id}`) as HTMLInputElement
-    const statFunctions = ratioCheckbox.checked ? ratioStatFunction : absoluteStatFunctions
-
+    const statFunctions = !ratioCheckbox.checked 
+      ? (statType: string) => absoluteStatFunctions[statType]
+      : ((this.div.querySelector(`#goals-participation-btn-${this.id}`) as HTMLInputElement).checked) 
+        ? (statType: string) => ratioFunction(statType, "Goals by team")
+        : (statType: string) => ratioFunction(statType, "Games played");
     
     const seasonFilter = (this.players.length != 1 && (this.div.querySelector(`#season-checkbox-${this.id}`) as HTMLInputElement).checked) 
       ? await Season.getSeasonById(parseInt((this.div.querySelector(`#season-select-${this.id}`) as HTMLSelectElement).value)) 
@@ -195,7 +194,7 @@ class ChartContainer {
     
     let chartInput = new BarChartInput(
       sortedStats.map(([p, _]) => p.getNameFormatted()),
-      Object.fromEntries(statsToDisplay.map(statType => [statType, sortedStats.map(([_, stats]) => statFunctions[statType](stats))]))
+      Object.fromEntries(statsToDisplay.map(statType => [statType, sortedStats.map(([_, stats]) => statFunctions(statType)(stats))]))
     )
 
     const datasets = chartInput.getDataset()
@@ -205,9 +204,9 @@ class ChartContainer {
       datasets: datasets
     }
 
-    this.chart.options = displayWonTieLost ? getStackedBarChartOptions(this.title) : getGroupedBarChartOptions(this.title);
+    this.chart.options = stackedBarChart ? getStackedBarChartOptions(this.title) : getGroupedBarChartOptions(this.title);
     this.chart.update()
-    this.loadSpinner.style.display = "none"
+    this.loadSpinner.hide()
   }
 
 }

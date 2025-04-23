@@ -2,6 +2,7 @@ import { fetchPlayerData } from "./fetch_player_data.js";
 import { Tournament } from "./tournament.js";
 import { Season } from "./season.js";
 import { Player } from "./player.js";
+import { ErrorToast } from "../view/utils.js";
 
 type CompetitionLevel = "SEASON" | "TOURNAMENT"
 type GameOutcome =  "TIE" | "WON" | "LOST"
@@ -100,12 +101,11 @@ interface Stats {
   tie: number
   lost: number
   goalsByTeam: number,
-  goalsConceded: number,
-  participationRateInGoals: number
+  goalsConceded: number
 }
 
 class GameCollection {
-  private static gamesByPlayerCache: Map<number, Array<PlayerGame>> = new Map() 
+  private static gamesByPlayerCache: Map<number, Array<PlayerGame>> = new Map()
 
   constructor(readonly player: Player, readonly games: Array<PlayerGame>) {}
 
@@ -115,9 +115,6 @@ class GameCollection {
   }
 
   computeStats(): Stats {
-    const goals = this.getGoalsCount()
-    const assists = this.getAssistsCount()
-    const goalsByTeam = this.getGoalsByTeamCount()
     const wonTieLostCount = this.getWonTieLostCount()
     return {
       gamesPlayed: this.getGamesPlayedCount(),
@@ -127,9 +124,8 @@ class GameCollection {
       won: wonTieLostCount.get("WON"),
       tie: wonTieLostCount.get("TIE"),
       lost: wonTieLostCount.get("LOST"),
-      goalsByTeam: goalsByTeam,
-      goalsConceded: this.getGoalsConcededCount(),
-      participationRateInGoals: goalsByTeam == 0 ? 0 : (goals + assists) / goalsByTeam
+      goalsByTeam: this.getGoalsByTeamCount(),
+      goalsConceded: this.getGoalsConcededCount()
     }
   }
 
@@ -189,11 +185,15 @@ class GameCollection {
 
   static async loadPlayerGameCollection(player:Player) {
     if (!this.gamesByPlayerCache.has(player.id)) {
-      const [, matches] = await fetchPlayerData(player.id, "match")
-      const games = await Promise.all(matches.list_match.map(async (data: any) => await PlayerGame.createFromData(data)))
+      const [status, matches] = await fetchPlayerData(player.id, "match")  
+      const games = status != 200 
+        ? []
+        : await Promise.all(matches.list_match.map(async (data: any) => await PlayerGame.createFromData(data)))
       this.gamesByPlayerCache.set(player.id, uniqBy(games, (g: Game) => g.id))
+      if (status != 200)
+        new ErrorToast(player.name).show()
     }
-    return new GameCollection(player, this.gamesByPlayerCache.get(player.id)) 
+    return new GameCollection(player, this.gamesByPlayerCache.get(player.id))
   }
 }
 
