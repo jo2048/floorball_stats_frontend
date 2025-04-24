@@ -5,7 +5,7 @@ function fillSelect(select: HTMLSelectElement, values: Array<any>) {
   for (const elt of values) {
     const opt = document.createElement("option");
     opt.value = elt["id"];
-    opt.textContent = elt["name"];
+    opt.textContent = elt.getNameFormatted();
     select.appendChild(opt);
   }
 }

@@ -51,7 +51,19 @@ async function fetchPlayerData(playerId: number, command: string) {
   }
 }
 
-async function fetchTeamPlayers(teamId: number) {
+
+
+const teamPlayersCache: Map<number, any> = new Map()
+
+async function getTeamPlayers(teamId: number): Promise<any> {
+  if (!teamPlayersCache.has(teamId)) {
+    const players = await fetchTeamPlayers(teamId)
+    teamPlayersCache.set(teamId, players[1])
+  }
+  return teamPlayersCache.get(teamId)
+}
+
+async function fetchTeamPlayers(teamId: number): Promise<[number, any]> {
   const url = Config.getInstance().baseUrl + "public_players_get.php";
   const payload = { id: teamId, command: "team" };
   try {
@@ -75,7 +87,7 @@ async function fetchTeamPlayers(teamId: number) {
   }
 }
 
-async function fetchGamePlayers(gameId: number): Promise<[number, Array<GetGamePlayerResult>]> {
+async function fetchGamePlayers(gameId: number): Promise<[number, Array<GetGamePlayersResult>]> {
   const url = Config.getInstance().baseUrl + "public_mt_match_get.php";
   const payload = { id: gameId, command: "player", old: true };
   try {
@@ -96,7 +108,7 @@ async function fetchGamePlayers(gameId: number): Promise<[number, Array<GetGameP
   }
 }
 
-interface GetGamePlayerResult {
+interface GetGamePlayersResult {
   "assist": number,
   "fault": number,
   "firstname": string,
@@ -119,11 +131,29 @@ interface GetGamePlayerResult {
   "teamid": number
 }
 
-async function getGamePlayersFilteredByTeam(playerId:number, gameId: number, sameTeam=true): Promise<Array<number>> {
-  const data = await fetchGamePlayers(gameId)
-  const playerArray = data[1]
-  const teamId = playerArray.find((p: any) => p.id == playerId).teamid
-  return playerArray.filter(p => sameTeam ? p.teamid == teamId : p.teamid != teamId).map(p => p.id)
+interface GameParticipation {
+  playerId: number,
+  teamId: number
 }
 
-export { searchPlayerByName, fetchPlayerData, fetchTeamPlayers, getGamePlayersFilteredByTeam };
+function gamePlayerResultToGameParticipation(gamePlayerResult: GetGamePlayersResult): GameParticipation {
+  return {
+    playerId: gamePlayerResult.id,
+    teamId: gamePlayerResult.teamid
+  }
+}
+
+const gameParticipationCache: Map<number, Array<GameParticipation>> = new Map()
+
+async function getGamePlayersFilteredByTeam(gameId: number, playerId:number, sameTeam=true) {
+  if (!gameParticipationCache.has(gameId)) {
+    const data = await fetchGamePlayers(gameId)
+    const playerArray = data[1].map(gamePlayerResultToGameParticipation)
+    gameParticipationCache.set(gameId, playerArray)
+  }
+  const participationArray = gameParticipationCache.get(gameId)
+  const teamId = participationArray.find(p => p.playerId == playerId).teamId
+  return participationArray.filter(p => sameTeam ? p.teamId == teamId : p.teamId != teamId).map(p => p.playerId)
+}
+
+export { searchPlayerByName, fetchPlayerData, getTeamPlayers, getGamePlayersFilteredByTeam };

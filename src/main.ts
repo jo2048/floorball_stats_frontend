@@ -4,6 +4,7 @@ import { Chart } from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { PlayerCardsView } from "./view/player_cards_view.js";
 import { configTooltips } from "./view/utils.js";
+import { CompareTeamsView } from "./view/compare_teams_view.js";
 
 // CONFIG TOOLTIPS
 configTooltips()
@@ -27,21 +28,19 @@ const main = document.getElementsByTagName("main")[0]
 const homeView = document.getElementById("home-view")
 let focusedView = homeView
 
-document.getElementById("home-view-link").addEventListener("click", () => {
-    if (focusedView !== homeView) {
-        focusedView = homeView
-        main.removeChild(PlayerCardsView.playerCardsDiv)
-        main.appendChild(homeView)
-    }
-})
-
-
-document.getElementById("player-cards-view-link").addEventListener("click", () => {
-    if (focusedView === homeView) {
-        focusedView = PlayerCardsView.playerCardsDiv
-        main.removeChild(homeView)
+function setFocusedView(view: HTMLElement) {
+    if (focusedView !== view) {
+        main.removeChild(focusedView)
+        focusedView = view
         main.appendChild(focusedView)
     }
-})
+} 
+
+document.getElementById("home-view-link").addEventListener("click", () => setFocusedView(homeView))
+
+document.getElementById("player-cards-view-link").addEventListener("click", () => setFocusedView(PlayerCardsView.container))
+
+CompareTeamsView.init()
+document.getElementById("compare-teams-view-link").addEventListener("click", () => setFocusedView(CompareTeamsView.container))
 
 await initPage();

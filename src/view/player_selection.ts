@@ -1,7 +1,7 @@
 import { Season } from "../model/season.js"
 import { Player } from "../model/player.js"
 import { ChartContainer } from "./chart_container.js"
-import { fetchTeamPlayers, searchPlayerByName } from "../model/fetch_player_data.js"
+import { getTeamPlayers, searchPlayerByName } from "../model/fetch_player_data.js"
 import { PlayerCardsView } from "./player_cards_view.js";
 import { fillSelect, Modal } from "./utils.js";
 
@@ -32,13 +32,12 @@ async function initPage(): Promise<void> {
   
   clubSelect.addEventListener("change", async () => {
     const [_, teams] = await Season.fetchTeamsBySeasonAndClub(parseInt(seasonSelect.value), parseInt(clubSelect.value))
-    teams.forEach((t: any) => t.name = `${t.name} (${t.category})`)
     fillSelect(teamSelect, teams)
   })
   
   
   searchTeamPlayersButton.addEventListener("click", async () => {
-    const [_ ,data] = await fetchTeamPlayers(parseInt(teamSelect.value))
+    const data = await getTeamPlayers(parseInt(teamSelect.value))
     const clubName = clubSelect.options[clubSelect.selectedIndex].text
     data.forEach((e: any) => e.clubname = clubName)
     const players = await Promise.all(data.map((e: unknown) => Player.registerPlayer(e)))

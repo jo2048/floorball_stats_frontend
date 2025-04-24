@@ -6,16 +6,15 @@ import { getStackedBarChartOptions } from "./display_bar_chart";
 import { Modal, roundNumber, Spinner } from "./utils";
 import { getGamePlayersFilteredByTeam } from "../model/fetch_player_data";
 
+function createContainer() {
+  const container = document.createElement("div")
+  container.classList.add("main-div","container-fluid","d-inline-flex","gap-3","m-3","flex-row","flex-wrap","justify-content-start")
+  return container
+}
 
 class PlayerCardsView {
-  static playerCardsDiv = this.#createPlayersCardDiv()
+  static container = createContainer()
   static displayedPlayerIds: Set<number> = new Set()
-
-  static #createPlayersCardDiv() {
-    const playerCardsDiv = document.createElement("div")
-    playerCardsDiv.classList.add("main-div","container-fluid","d-inline-flex","gap-3","m-3","flex-row","flex-wrap","justify-content-start")
-    return playerCardsDiv
-  }
 
   static #computeInvolvementRateInGoals(stats: Stats) {
     return stats.goalsByTeam == 0 ? 0 : (stats.goals + stats.assists) / stats.goalsByTeam
@@ -30,16 +29,11 @@ class PlayerCardsView {
     const stats = gameCollection.computeStats()
 
     const sortedGames = gameCollection.games.toSorted((g1, g2) => g1.date.getTime() - g2.date.getTime())
-    if (player.name == "Couvreur Axel") {
-      console.log(gameCollection.games)
-      console.log(sortedGames)
-      console.log(gameCollection.games.sort((a, b) => a.date.getDate() - b.date.getDate()))
-    }
 
     // participationRateInGoals: goalsByTeam == 0 ? 0 : (goals + assists) / goalsByTeam
     const participationRateInGoals = roundNumber(this.#computeInvolvementRateInGoals(stats) * 100)
   
-    this.playerCardsDiv.insertAdjacentHTML("beforeend",`
+    this.container.insertAdjacentHTML("beforeend",`
       <div class="card w-22" id="player-card-${player.id}">
         <div class="card-header d-flex justify-content-between">
             <h5 class="card-title">${player.name}</h5>
@@ -51,8 +45,8 @@ class PlayerCardsView {
           <li class="list-group-item">${player.getAge()} years old</li>
           <li class="list-group-item bg-info-subtle">${player.currentClubName}</li>
           <li class="list-group-item bg-secondary-subtle"">${stats.gamesPlayed} games played</li>
-          <li class="list-group-item">First game played: ${sortedGames[0].date.toLocaleDateString()}</li>
-          <li class="list-group-item">Last game played: ${sortedGames[sortedGames.length - 1].date.toLocaleDateString()}</li>
+          <li class="list-group-item">First game played: ${sortedGames.length > 0 ? sortedGames[0].date.toLocaleDateString() : "Never played yet"}</li>
+          <li class="list-group-item">Last game played: ${sortedGames.length > 0 ? sortedGames[sortedGames.length - 1].date.toLocaleDateString() : "Never played yet"}</li>
           <li class="list-group-item">Direct involvement in ${participationRateInGoals} % of goals</li>
         </ul>
         <div class="card-body" id="goals-involvement-div-${player.id}">
@@ -66,12 +60,12 @@ class PlayerCardsView {
     // <li class="list-group-item bg-danger-subtle">${stats.goalsConceded} goals conceded</li>
     // <li class="list-group-item bg-success-subtle">${stats.goalsByTeam} goals scored by team</li>
 
-    this.playerCardsDiv.querySelector(`#close-card-button-${player.id}`).addEventListener("click", () => {
-      this.playerCardsDiv.querySelector(`#player-card-${player.id}`).remove()
+    this.container.querySelector(`#close-card-button-${player.id}`).addEventListener("click", () => {
+      this.container.querySelector(`#player-card-${player.id}`).remove()
       this.displayedPlayerIds.delete(player.id)
     })
 
-    this.playerCardsDiv.querySelector(`#player-network-btn-${player.id}`).addEventListener("click", async () => {
+    this.container.querySelector(`#player-network-btn-${player.id}`).addEventListener("click", async () => {
       const div = document.createElement("div")
       const spinner = new Spinner()
       div.appendChild(spinner.container)
@@ -92,7 +86,7 @@ class PlayerCardsView {
   }
 
   static #createDoughnutChart(player: Player, stats: Stats): Chart {
-    const div = this.playerCardsDiv.querySelector(`#game-outcome-div-${player.id}`) as HTMLDivElement
+    const div = this.container.querySelector(`#game-outcome-div-${player.id}`) as HTMLDivElement
     const canvas = document.createElement("canvas")
     div.appendChild(canvas)
     const gameOutcomes = ['Won', 'Tie', 'Lost']
@@ -119,7 +113,7 @@ class PlayerCardsView {
   }
 
   static #createHorizontalBarChart(player: Player, stats: Stats): Chart {
-    const div = this.playerCardsDiv.querySelector(`#goals-involvement-div-${player.id}`) as HTMLDivElement
+    const div = this.container.querySelector(`#goals-involvement-div-${player.id}`) as HTMLDivElement
     const canvas = document.createElement("canvas")
     div.appendChild(canvas)
     const data = {
@@ -161,7 +155,7 @@ class PlayerCardsView {
 
 async function createPolarAreaChart(player: Player, threshold: number): Promise<HTMLCanvasElement> {
   const gameCollection = await GameCollection.loadPlayerGameCollection(player)
-  const playerIdsArray = await Promise.all(gameCollection.games.map(g => getGamePlayersFilteredByTeam(player.id, g.id)))
+  const playerIdsArray = await Promise.all(gameCollection.games.map(g => getGamePlayersFilteredByTeam(g.id, player.id)))
   let count: Record<number, number> = {};
   playerIdsArray.flat().forEach((val: number) => count[val] = (count[val] || 0) + 1);
 

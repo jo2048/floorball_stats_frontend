@@ -1,5 +1,29 @@
 import { Config } from "../view/config.js";
+import { Team } from "./team.js";
 
+interface Club {
+  readonly city: string,
+  readonly coloraway1: string,
+  readonly coloraway2: string,
+  readonly colorhome1: string,
+  readonly colorhome2: string,
+  readonly email: string,
+  readonly halls: Array<any>,
+  readonly id: number,
+  readonly isactive: number,
+  readonly matriculation: number,
+  readonly name: string,
+  readonly phone: string,
+  readonly website: string,
+  getNameFormatted: () => string;
+}
+
+class ClubFactory {
+  static createClub(clubData: Club): Club {
+    clubData.getNameFormatted = () => { return clubData.name }
+    return clubData
+  }
+}
 
 class Season {
   static _instances: Map<number, Season> = null;
@@ -77,11 +101,8 @@ class Season {
             throw new Error(`Response status: ${response.status} for clubs for season= ${this.id}`);
         }
         const json = await response.json();
-        delete json.list_logo;
-        delete json.clublogo;
         delete json.logo
-        delete json.photo;
-        this.clubs = json
+        this.clubs = json.map((e: any) => ClubFactory.createClub(e))
       } catch (error: any) {
         console.error(`Error: ${error.message}`);
         return [500];
@@ -97,7 +118,7 @@ class Season {
     return season.fetchClubs()
   }
 
-  static async fetchTeamsBySeasonAndClub(seasonId: number, clubId: number): Promise<[number, Array<unknown>]> {
+  static async fetchTeamsBySeasonAndClub(seasonId: number, clubId: number): Promise<[number, Array<Team>]> {
     const url = Config.getInstance().baseUrl + "public_teams_byclubbyseason.php"
     const payload = { seasonid: seasonId, clubid: clubId };
     try {
@@ -109,7 +130,7 @@ class Season {
           throw new Error(`Response status: ${response.status}`);
       }
       const json = await response.json();
-      return [response.status, json];
+      return [response.status, json.map((e: any) => new Team(e.id, e.category, e.clubid, e.name))];
     } catch (error: any) {
       console.error(`Error: ${error.message}`);
       return [500, null];

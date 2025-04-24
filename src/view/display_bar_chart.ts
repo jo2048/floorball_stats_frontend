@@ -46,7 +46,7 @@ function getCommonBarChartOptions(title: string, displayLegend: boolean): ChartO
         // font: {
         //     weight: 'bold',
         // },
-        formatter: function (value: number, context: any): String {
+        formatter: function (value: number, context: any): string {
           return value == 0 ? "" : roundNumber(value).toString();
         },
       },

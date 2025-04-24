@@ -1,5 +1,6 @@
 import { fetchPlayerData } from "./fetch_player_data.js"
 
+
 class Player {
   private static cache: Map<number, Player> = new Map();
 
@@ -12,7 +13,10 @@ class Player {
 
   getAge() {
     const currentDate = new Date(Date.now())
-    return currentDate.getFullYear() - this.birthdate.getFullYear() + (new Date(1970, currentDate.getMonth(), currentDate.getDay()) < new Date(1970, this.birthdate.getMonth(), this.birthdate.getDay()) ? -1 : 0)
+    let result = currentDate.getFullYear() - this.birthdate.getFullYear()
+    if (currentDate.getMonth() < this.birthdate.getMonth() || (currentDate.getMonth() == this.birthdate.getMonth() && currentDate.getDate() < this.birthdate.getDate())) 
+      result -= 1
+    return result
   }
 
   getNameFormatted() {
