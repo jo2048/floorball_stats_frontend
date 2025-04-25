@@ -39,8 +39,8 @@ async function initPage(): Promise<void> {
   searchTeamPlayersButton.addEventListener("click", async () => {
     const data = await getTeamPlayers(parseInt(teamSelect.value))
     const clubName = clubSelect.options[clubSelect.selectedIndex].text
-    data.forEach((e: any) => e.clubname = clubName)
-    const players = await Promise.all(data.map((e: unknown) => Player.registerPlayer(e)))
+    const players: Array<Player> = await Promise.all(data.map((e: unknown) => Player.registerPlayer(e)))
+    players.forEach(p => p.currentClubName = clubName)
     players.forEach(p => addPlayerInPool(p))
   })
   
@@ -54,7 +54,7 @@ async function initPage(): Promise<void> {
   searchPlayerButton.addEventListener("click", async () => {
     if (searchPlayerInput.checkValidity()) {
       const [_, result] = await searchPlayerByName(searchPlayerInput.value)
-      const players = await Promise.all(result.map((data: unknown) => Player.registerPlayer(data)))
+      const players: Array<Player> = await Promise.all(result.map((data: unknown) => Player.registerPlayer(data)))
       players.forEach(p => addPlayerInPool(p))
     }
   })
@@ -143,7 +143,7 @@ function changeStatus(span: HTMLSpanElement, newStatus: string) {
 
 function createPlayerSpan(player: Player) {
   const span = document.createElement("span")
-  span.innerHTML = `${player.name}</br>${player.getAge()} years old</br>${player.currentClubName}`
+  span.innerHTML = `${player.name}</br>${player.getAge() > 100 ? "unknown" : player.getAge() + " years old"}</br>${player.currentClubName}`
   span.setAttribute("class", "badge text-bg-success")
   span.setAttribute("status", "selected")
   span.addEventListener("click", () => {

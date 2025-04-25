@@ -2,10 +2,23 @@ import { Chart } from "chart.js";
 import { getTeamPlayers } from "../model/fetch_player_data";
 import { Player } from "../model/player";
 import { Season } from "../model/season";
-import { fillSelect } from "./utils";
+import { fillSelect, roundNumber, Spinner } from "./utils";
 import { Team } from "../model/team";
 import { GameCollection, Stats } from "../model/game";
 
+
+interface TeamSpan extends HTMLSpanElement {
+  color: string
+  team: Team
+}
+
+function generateRandomColor() {
+  const randomBetween = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+  const r = randomBetween(0, 255);
+  const g = randomBetween(0, 255);
+  const b = randomBetween(0, 255);
+  return `rgba(${r},${g},${b}, 70)`
+}
 
 function createContainer() {
   const container = document.createElement("div")
@@ -14,14 +27,19 @@ function createContainer() {
 }
 
 class CompareTeamsView {
-  static container = createContainer();
+  static instance = new CompareTeamsView()
+  readonly container: HTMLDivElement
+  readonly selectedTeamsDiv: HTMLDivElement
+  readonly teamSpans: Map<number, TeamSpan>
+  readonly canvas: HTMLCanvasElement
+  readonly spinner: Spinner
+  chart: Chart
 
-  static teams: Array<Team> = []
+  private constructor() {
+    this.container = createContainer();
+    this.teamSpans = new Map()
 
-  static async init() {
-    this.container.insertAdjacentHTML(
-      "beforeend",
-      `
+    this.container.insertAdjacentHTML("beforeend",`
       <h5>Search by team</h5>
       <div class="container row gap-2">
         <span class="col-xl-3 row">
@@ -38,12 +56,61 @@ class CompareTeamsView {
       </div>`
     );
 
-    const clubSelect = this.container.querySelector(
-      "#club-select-view1"
-    ) as HTMLSelectElement;
-    const teamSelect = this.container.querySelector(
-      "#team-select-view1"
-    ) as HTMLSelectElement;
+    this.selectedTeamsDiv = document.createElement("div");
+    this.selectedTeamsDiv.classList.add("container-fluid","d-flex","gap-2","m-3","justify-content-center")
+    this.container.appendChild(this.selectedTeamsDiv);
+
+    this.spinner = new Spinner()
+    this.spinner.hide()
+    this.spinner.container.classList.add("my-3")
+    this.container.appendChild(this.spinner.container)
+
+    // selectedTeamsDiv.appendChild()
+
+    const div = document.createElement("div");
+    div.classList.add("chart-container")
+    this.container.appendChild(div);
+    this.canvas = document.createElement("canvas");
+    this.canvas.classList.add("m-3")
+    div.appendChild(this.canvas)
+  }
+
+  createSelectedTeamBadge(team: Team) {
+    const color = "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0")
+
+    const template = document.createElement("template")
+    template.insertAdjacentHTML("beforeend", `
+      <span class="badge d-flex align-items-center p-1 pe-2 text-success-emphasis bg-success-subtle border border-success-subtle rounded-pill">
+        <input type="color" value="${color}" style="width: 28px; height: 28px;" class="ms-2 p-1 form-control form-control-color">
+        <span class="my-2 ms-2">
+          ${team.getNameFormatted()}
+        </span>  
+        <span class="vr mx-2"></span>
+        <a href="#" class="link-dark delete-link me-1" aria-label="Delete success"><i class="bi bi-x-circle-fill h5"></i></a>
+      </span>`
+    )
+    const span = template.firstElementChild as TeamSpan
+    this.teamSpans.set(team.id, span)
+    span.color = color
+    span.team = team
+
+    const colorInput = span.querySelector(".form-control-color") as HTMLInputElement
+    colorInput.addEventListener("change", () => {
+      span.color = colorInput.value
+      this.updateChart()
+    })
+    span.querySelector(".delete-link").addEventListener("click", () => {
+      span.remove()
+      this.teamSpans.delete(team.id)
+      this.updateChart()
+    })
+
+    return span
+  }
+
+  async init() {
+    const clubSelect = this.container.querySelector("#club-select-view1") as HTMLSelectElement;
+    const teamSelect = this.container.querySelector("#team-select-view1") as HTMLSelectElement;
     const addTeamBtn = this.container.querySelector("#add-team-view1");
 
     const seasons = await Season.getSeasonsSorted();
@@ -60,23 +127,17 @@ class CompareTeamsView {
     clubSelect.dispatchEvent(new Event("change"));
 
     addTeamBtn.addEventListener("click", async () => {
-      this.teams.push(Team.getTeamById(parseInt(teamSelect.value)))
-      await this.drawChart(this.teams)
+      const teamId = parseInt(teamSelect.value)
+      if (!this.teamSpans.has(teamId)) {
+        this.selectedTeamsDiv.appendChild(this.createSelectedTeamBadge(Team.getTeamById(teamId)))
+        await this.updateChart()
+      }
     });
-  }
 
-  static async drawChart(teams: Array<Team>) {
-    const div = document.createElement("div");
-    div.classList.add("chart-container")
-    this.container.appendChild(div);
-    const canvas = document.createElement("canvas");
-    canvas.classList.add("m-3")
-    div.appendChild(canvas)
-    const data = await Promise.all(teams.map(async team => await getTeamData(team)))
-    const chart = new Chart(canvas, {
+    this.chart = new Chart(this.canvas, {
       type: "bubble",
       data: {
-        datasets: data
+        datasets: []
       },
       options: {
         scales: {
@@ -96,12 +157,25 @@ class CompareTeamsView {
         plugins:{
           datalabels: {
             display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (tooltipItem: any) => {
+                return `${tooltipItem.raw.name} (${roundNumber(tooltipItem.raw.x)};${roundNumber(tooltipItem.raw.y)})`
+              }
+            }
           }
         }
       }
     } );
+  }
 
-    return canvas;
+  async updateChart() {
+    this.spinner.show()
+    const data = await Promise.all(Array.from(this.teamSpans.values()).map(async span => await getTeamData(span.team, span.color)))
+    this.chart.data.datasets = data 
+    this.chart.update()
+    this.spinner.hide()
   }
 }
 
@@ -113,26 +187,68 @@ function datediff(first: Date, second: Date): number {
 }
 
 
-async function getTeamData(team: Team) {
-  const data = await getTeamPlayers(team.id)
-  const players = await Promise.all(data.map((e: unknown) => Player.registerPlayer(e)))
+async function getTeamData(team: Team, color: string) {
+  const playersData = await getTeamPlayers(team.id)
+  const players = await Promise.all(playersData.map((e: unknown) => Player.registerPlayer(e)))
   const map: Map<Player, Stats> = new Map()
   for (const p of players) {
     const collection = await GameCollection.loadPlayerGameCollection(p)
     map.set(p, collection.computeStats())
   }
-  return {
-    label: team.getNameFormatted(),
-    data: players.map(p => { 
+  const statsData = players
+    .filter(p => p.getAge() <= 100)
+    .map(p => { 
       return {
         x: datediff(p.birthdate, new Date(Date.now())) / 365.25,
         y: map.get(p).gamesPlayed,
-        r: 7,
+        r: 5,
         name: p.getNameFormatted()
       }
     })
+
+  const avg = {
+    x: findAverage(statsData.map(s => s.x)),
+    y: findAverage(statsData.map(s => s.y)),
+    r: 10,
+    name: `average ${team.getNameFormatted()}`
+  }
+
+  // const median = {
+  //   x: findMedian(statsData.map(s => s.x)),
+  //   y: findMedian(statsData.map(s => s.y)),
+  //   r: 10,
+  //   name: `median ${team.getNameFormatted()}`
+  // }
+
+  statsData.push(avg)
+  // statsData.push(median)
+  return {
+    label: team.getNameFormatted(),
+    // pointStyle: (ctx: any) => {
+    //   if (ctx.raw.name.includes("average"))
+    //     return "star"
+    //   return ctx.raw.name.includes("median") ? "cross" : "circle"
+    // },
+    data: statsData,
+    backgroundColor: color + "AA" // +"AA" for opacity
   }
 }
+
+function findMedian(arr: Array<number>) {
+  arr.sort((a, b) => a - b);
+  const middleIndex = Math.floor(arr.length / 2);
+
+  if (arr.length % 2 === 0) {
+    return (arr[middleIndex - 1] + arr[middleIndex]) / 2;
+  } else {
+    return arr[middleIndex];
+  }
+}
+
+function findAverage(arr: Array<number>) {
+  return arr.reduce((a, b) => a + b) / arr.length;
+}
+
 
 
 export { CompareTeamsView };

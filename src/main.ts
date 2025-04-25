@@ -40,7 +40,7 @@ document.getElementById("home-view-link").addEventListener("click", () => setFoc
 
 document.getElementById("player-cards-view-link").addEventListener("click", () => setFocusedView(PlayerCardsView.container))
 
-CompareTeamsView.init()
-document.getElementById("compare-teams-view-link").addEventListener("click", () => setFocusedView(CompareTeamsView.container))
+CompareTeamsView.instance.init()
+document.getElementById("compare-teams-view-link").addEventListener("click", () => setFocusedView(CompareTeamsView.instance.container))
 
 await initPage();

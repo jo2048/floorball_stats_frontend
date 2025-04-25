@@ -23,7 +23,7 @@ class Player {
     return this.name;
   }
 
-  static registerPlayer(playerData: any) {
+  static registerPlayer(playerData: any): Player {
     const playerId = playerData.id;
     if (!this.cache.has(playerId))
       this.cache.set(
