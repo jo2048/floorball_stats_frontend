@@ -15,13 +15,16 @@ Chart.register(ChartDataLabels);
 
 // UPDATE LABELS DEPENDING ON CONFIG
 Array.from(document.getElementsByClassName("main-title")).forEach(element => {
-    const textChildNode = Array.from(element.childNodes.values())
-        .findLast((child: HTMLElement) => child.nodeType === Node.TEXT_NODE);
-    textChildNode.textContent = Config.getInstance().title
+  const textChildNode = Array.from(element.childNodes.values())
+    .findLast((child: HTMLElement) => child.nodeType === Node.TEXT_NODE);
+  textChildNode.textContent = Config.getInstance().title
 });
 
-document.getElementById("source-site-link").setAttribute("href", Config.getInstance().originalSiteUrl)
-document.getElementById("source-site-link").innerText = Config.getInstance().originalSiteName
+Array.from(document.getElementsByClassName("source-site-link")).forEach((element: HTMLLinkElement) => {
+  element.setAttribute("href", Config.getInstance().originalSiteUrl)
+  element.innerText = Config.getInstance().originalSiteName
+})
+
 
 // SETUP NAVBAR TO CHANGE VIEW
 const main = document.getElementsByTagName("main")[0]
@@ -29,11 +32,11 @@ const homeView = document.getElementById("home-view")
 let focusedView = homeView
 
 function setFocusedView(view: HTMLElement) {
-    if (focusedView !== view) {
-        main.removeChild(focusedView)
-        focusedView = view
-        main.appendChild(focusedView)
-    }
+  if (focusedView !== view) {
+    main.removeChild(focusedView)
+    focusedView = view
+    main.appendChild(focusedView)
+  }
 } 
 
 document.getElementById("home-view-link").addEventListener("click", () => setFocusedView(homeView))

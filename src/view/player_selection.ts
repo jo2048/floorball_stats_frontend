@@ -19,6 +19,7 @@ const selectAllButton = document.getElementById("player-pool-select-all-button")
 const removeUnselectedButton = document.getElementById("player-pool-remove-unselected-button") as HTMLButtonElement
 const createChartButton = document.getElementById("create-chart-button") as HTMLButtonElement
 const displayChartButton = document.getElementById("display-chart-button") as HTMLButtonElement
+const displayCardsButton = document.getElementById("display-cards-button") as HTMLButtonElement
 
 async function initPage(): Promise<void> {
   const sortedSeasons = await Season.getSeasonsSorted()
@@ -88,10 +89,8 @@ async function initPage(): Promise<void> {
   createChartButton.addEventListener("click", async () => {
     const selectedPlayersIds = getSelectedPlayersIds()
 
-    if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
+    if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) 
       await createCollapsibleChart(selectedPlayersIds)
-      selectedPlayersIds.forEach(id => PlayerCardsView.createSinglePlayerCard(id))
-    }
   })
 
   displayChartButton.addEventListener("click", async () => {
@@ -103,8 +102,15 @@ async function initPage(): Promise<void> {
       Modal.showContent(chartContainer.div)
       Modal.setText(selectedPlayersIds.length == 1 ? "Chart - " + chartContainer.title : "Chart")
       await chartContainer.display()
-      selectedPlayersIds.forEach(id => PlayerCardsView.createSinglePlayerCard(id))
     }
+  })
+
+  displayCardsButton.addEventListener("click", async () => {
+    const selectedPlayersIds = getSelectedPlayersIds()
+    if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
+      await Promise.all(selectedPlayersIds.map(id => PlayerCardsView.createSinglePlayerCard(id)))
+    }
+    document.getElementById("player-cards-view-link").dispatchEvent(new Event("click"));
   })
 
 

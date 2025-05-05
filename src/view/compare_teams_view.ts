@@ -1,4 +1,4 @@
-import { Chart } from "chart.js";
+import { Chart } from "chart.js/auto";
 import { getTeamPlayers } from "../model/fetch_player_data";
 import { Player } from "../model/player";
 import { Season } from "../model/season";
@@ -126,6 +126,11 @@ class CompareTeamsView {
     });
     clubSelect.dispatchEvent(new Event("change"));
 
+    teamSelect.addEventListener("change", async () => {
+      const teamId = parseInt(teamSelect.value)
+      teamSelect.disabled = this.teamSpans.has(teamId)
+    });
+
     addTeamBtn.addEventListener("click", async () => {
       const teamId = parseInt(teamSelect.value)
       if (!this.teamSpans.has(teamId)) {
@@ -210,7 +215,7 @@ async function getTeamData(team: Team, color: string) {
     x: findAverage(statsData.map(s => s.x)),
     y: findAverage(statsData.map(s => s.y)),
     r: 10,
-    name: `average ${team.getNameFormatted()}`
+    name: `Average ${team.getNameFormatted()}`
   }
 
   // const median = {
@@ -230,7 +235,7 @@ async function getTeamData(team: Team, color: string) {
     //   return ctx.raw.name.includes("median") ? "cross" : "circle"
     // },
     data: statsData,
-    backgroundColor: color + "AA" // +"AA" for opacity
+    backgroundColor: color + "BB" // +"AA" for opacity
   }
 }
 

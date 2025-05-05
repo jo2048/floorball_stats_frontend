@@ -1,7 +1,7 @@
 import { type CompetitionLevel, GameCollection, type Stats } from "../model/game.js"
 import type { Player } from "../model/player.js";
 import { Season } from "../model/season.js";
-import { Chart} from "chart.js/auto";
+import { Chart } from "chart.js/auto";
 import { BarChartInput, getGroupedBarChartOptions, getStackedBarChartOptions } from "./display_bar_chart.js";
 import { fillSelect, Spinner } from "./utils.js";
 

@@ -1,10 +1,11 @@
 import { GameCollection, Stats } from "../model/game";
 import { Player } from "../model/player";
-import { Chart, ChartOptions } from "chart.js/auto";
+import { Chart, type ChartOptions } from "chart.js/auto";
 import { COLORS } from "./config";
 import { getStackedBarChartOptions } from "./display_bar_chart";
 import { Modal, roundNumber, Spinner } from "./utils";
 import { getGamePlayersFilteredByTeam } from "../model/fetch_player_data";
+
 
 function createContainer() {
   const container = document.createElement("div")
@@ -65,7 +66,8 @@ class PlayerCardsView {
       this.displayedPlayerIds.delete(player.id)
     })
 
-    this.container.querySelector(`#player-network-btn-${player.id}`).addEventListener("click", async () => {
+    const playerTeammatesButton = this.container.querySelector(`#player-network-btn-${player.id}`) as HTMLButtonElement
+    playerTeammatesButton.addEventListener("click", async () => {
       const div = document.createElement("div")
       const spinner = new Spinner()
       div.appendChild(spinner.container)
@@ -80,6 +82,7 @@ class PlayerCardsView {
       this.#createDoughnutChart(player, stats)
       this.#createHorizontalBarChart(player, stats)
     } else {
+      playerTeammatesButton.remove()
       // this.playerCardsDiv.querySelector(`#goals-involvement-div-${player.id}`).remove()
       // this.playerCardsDiv.querySelector(`#game-outcome-div-${player.id}`).remove()
     }
@@ -136,13 +139,17 @@ class PlayerCardsView {
     options.scales.x.display = false
     options.scales.y.display = false
     options.scales.x.max = stats.goalsByTeam
-    options.aspectRatio = 5
+    options.aspectRatio = 4
+    options.interaction = {
+      axis: 'xy',
+      mode: "index"
+    }
     options.plugins.tooltip = {
       callbacks: {
         label: (tooltipItem: any) => {
-          return tooltipItem.dataset.data[0].toString() + " (" + roundNumber(tooltipItem.dataset.data[0] * 100 / stats.goalsByTeam)  + "%)"
+          return tooltipItem.dataset.label + ": " + tooltipItem.dataset.data[0].toString() + " (" + roundNumber(tooltipItem.dataset.data[0] * 100 / stats.goalsByTeam)  + "%)"
         },
-      }
+      },
     }
     return new Chart(canvas , {
       type: "bar", 

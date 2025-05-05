@@ -11,7 +11,7 @@ const CONFIGS: Record<string, CountryConfig> = {
         baseUrl: "https://www.floorballbelgium.be/api/",
         title: "Belgian floorball statistics",
         originalSiteUrl: "https://www.floorballbelgium.be/",
-        originalSiteName: "the BFF official site" 
+        originalSiteName: "BFF official website" 
     },
     "FRANCE": {
         baseUrl: "https://visu.floorball.fr/api/",
@@ -23,7 +23,7 @@ const CONFIGS: Record<string, CountryConfig> = {
         baseUrl: "http://127.0.0.1:5000/caching/",
         title: "Belgian floorball statistics",
         originalSiteUrl: "https://www.floorballbelgium.be/",
-        originalSiteName: "the BFF official site" 
+        originalSiteName: "BFF official website" 
     }
 }
 
