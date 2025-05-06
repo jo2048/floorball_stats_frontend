@@ -22,10 +22,8 @@ class Tournament {
   }
 
   static async getTournamentById(tournamentId: number) {
-    if (tournamentId === undefined)
-      throw new Error("Invalid argument to get tournament : tournamentId=" + tournamentId)
     while (this.cache.has("wait-for-"+tournamentId))
-      await this.#delay(100)
+      await this.#delay(50)
     if (!this.cache.has(tournamentId)) {
       this.cache.set("wait-for-"+tournamentId, null)
       const [_, tournamentData] = await fetchTournament(tournamentId);

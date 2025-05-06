@@ -1,11 +1,21 @@
 import { GameCollection, Stats } from "../model/game";
 import { Player } from "../model/player";
-import { Chart, type ChartOptions } from "chart.js/auto";
+import { type ActiveElement, Chart, Tooltip, type ChartOptions, type Point } from "chart.js/auto";
 import { COLORS } from "./config";
 import { getStackedBarChartOptions } from "./display_bar_chart";
 import { Modal, roundNumber, Spinner } from "./utils";
 import { getGamePlayersFilteredByTeam } from "../model/fetch_player_data";
 
+Tooltip.positioners.chartCenter = function(items: ActiveElement[], eventPosition: Point) {
+  const chart: Chart = this.chart;
+
+  return {
+    x: (chart.chartArea.left + chart.chartArea.right) / 2,
+    y: chart.chartArea.bottom,
+    xAlign: 'center',
+    yAlign: 'top',
+  };
+};
 
 function createContainer() {
   const container = document.createElement("div")
@@ -32,7 +42,7 @@ class PlayerCardsView {
     const sortedGames = gameCollection.games.toSorted((g1, g2) => g1.date.getTime() - g2.date.getTime())
 
     // participationRateInGoals: goalsByTeam == 0 ? 0 : (goals + assists) / goalsByTeam
-    const participationRateInGoals = roundNumber(this.#computeInvolvementRateInGoals(stats) * 100)
+
   
     this.container.insertAdjacentHTML("beforeend",`
       <div class="card w-22" id="player-card-${player.id}">
@@ -48,7 +58,6 @@ class PlayerCardsView {
           <li class="list-group-item bg-secondary-subtle"">${stats.gamesPlayed} games played</li>
           <li class="list-group-item">First game played: ${sortedGames.length > 0 ? sortedGames[0].date.toLocaleDateString() : "Never played yet"}</li>
           <li class="list-group-item">Last game played: ${sortedGames.length > 0 ? sortedGames[sortedGames.length - 1].date.toLocaleDateString() : "Never played yet"}</li>
-          <li class="list-group-item">Direct involvement in ${participationRateInGoals} % of goals</li>
         </ul>
         <div class="card-body" id="goals-involvement-div-${player.id}">
         </div>
@@ -79,8 +88,8 @@ class PlayerCardsView {
     })
     
     if (stats.gamesPlayed > 0) {
-      this.#createDoughnutChart(player, stats)
-      this.#createHorizontalBarChart(player, stats)
+      this.#createWonTieLostChart(player, stats)
+      this.#createGoalInvolvementBarChart(player, stats)
     } else {
       playerTeammatesButton.remove()
       // this.playerCardsDiv.querySelector(`#goals-involvement-div-${player.id}`).remove()
@@ -88,34 +97,37 @@ class PlayerCardsView {
     }
   }
 
-  static #createDoughnutChart(player: Player, stats: Stats): Chart {
+  static #createWonTieLostChart(player: Player, stats: Stats): Chart {
     const div = this.container.querySelector(`#game-outcome-div-${player.id}`) as HTMLDivElement
     const canvas = document.createElement("canvas")
     div.appendChild(canvas)
-    const gameOutcomes = ['Won', 'Tie', 'Lost']
-    const gameOutcomesData = {
-      labels: gameOutcomes,
+    const data = {
+      labels: [''],
       datasets: [{
-        label: player.name,
-        data: [stats.won, stats.tie, stats.lost],
-        backgroundColor: gameOutcomes.map(e => COLORS[e]),
-        hoverOffset: 4,
-      }]
+          label: 'Won',
+          data: [stats.won],
+          backgroundColor: COLORS["Won"],
+        },{
+          label: 'Tie',
+          data: [stats.tie],
+          backgroundColor: COLORS["Tie"]
+        },{
+          label: 'Lost',
+          data: [stats.lost],
+          backgroundColor: COLORS["Lost"]
+        }
+      ]
     };
   
-    const doughnutOptions: ChartOptions = {
-      plugins: {
-        tooltip: {
-          enabled: false
-        }
-      }
-    }
-    return new Chart(canvas, {
-      type: "doughnut", data: gameOutcomesData, options: doughnutOptions
+    const options = getSmallHorizontalBarChartOptions("Won, tie, lost", stats.gamesPlayed)
+    return new Chart(canvas , {
+      type: "bar", 
+      data: data, 
+      options: options
     })
   }
 
-  static #createHorizontalBarChart(player: Player, stats: Stats): Chart {
+  static #createGoalInvolvementBarChart(player: Player, stats: Stats): Chart {
     const div = this.container.querySelector(`#goals-involvement-div-${player.id}`) as HTMLDivElement
     const canvas = document.createElement("canvas")
     div.appendChild(canvas)
@@ -134,29 +146,37 @@ class PlayerCardsView {
       ]
     };
   
-    const options = getStackedBarChartOptions(null, false)
-    options.indexAxis = "y"
-    options.scales.x.display = false
-    options.scales.y.display = false
-    options.scales.x.max = stats.goalsByTeam
-    options.aspectRatio = 4
-    options.interaction = {
-      axis: 'xy',
-      mode: "index"
-    }
-    options.plugins.tooltip = {
-      callbacks: {
-        label: (tooltipItem: any) => {
-          return tooltipItem.dataset.label + ": " + tooltipItem.dataset.data[0].toString() + " (" + roundNumber(tooltipItem.dataset.data[0] * 100 / stats.goalsByTeam)  + "%)"
-        },
-      },
-    }
+    const participationRateInGoals = roundNumber(this.#computeInvolvementRateInGoals(stats) * 100)
+    const title = `Direct involvement in ${participationRateInGoals} % of goals`
+    const options = getSmallHorizontalBarChartOptions(title, stats.goalsByTeam)
     return new Chart(canvas , {
       type: "bar", 
       data: data, 
       options: options
     })
   }
+}
+
+function getSmallHorizontalBarChartOptions(title: string, totalItems: number): ChartOptions {
+  const options = getStackedBarChartOptions(title, false)
+  options.indexAxis = "y"
+  options.scales.x.display = false
+  options.scales.y.display = false
+  options.scales.x.max = totalItems
+  options.aspectRatio = 3.2
+  options.interaction = {
+    axis: 'xy',
+    mode: "index"
+  }
+  options.plugins.tooltip = {
+    position: "chartCenter",
+    callbacks: {
+      label: (tooltipItem: any) => {
+        return tooltipItem.dataset.label + ": " + tooltipItem.dataset.data[0].toString() + " (" + roundNumber(tooltipItem.dataset.data[0] * 100 / totalItems)  + "%)"
+      },
+    },
+  }
+  return options;
 }
 
 

@@ -194,22 +194,21 @@ function datediff(first: Date, second: Date): number {
 
 async function getTeamData(team: Team, color: string) {
   const playersData = await getTeamPlayers(team.id)
-  const players = await Promise.all(playersData.map((e: unknown) => Player.registerPlayer(e)))
-  const map: Map<Player, Stats> = new Map()
-  for (const p of players) {
-    const collection = await GameCollection.loadPlayerGameCollection(p)
-    map.set(p, collection.computeStats())
-  }
-  const statsData = players
+  const players: Array<Player> = playersData.map((e: unknown) => Player.registerPlayer(e))
+
+  const statsData = await Promise.all(players
     .filter(p => p.getAge() <= 100)
-    .map(p => { 
+    .map(async p => {
+      const collection = await GameCollection.loadPlayerGameCollection(p)
+      const stats = collection.computeStats()
       return {
         x: datediff(p.birthdate, new Date(Date.now())) / 365.25,
-        y: map.get(p).gamesPlayed,
+        y: stats.gamesPlayed,
         r: 5,
         name: p.getNameFormatted()
       }
     })
+  )
 
   const avg = {
     x: findAverage(statsData.map(s => s.x)),

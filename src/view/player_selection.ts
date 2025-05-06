@@ -55,7 +55,7 @@ async function initPage(): Promise<void> {
   searchPlayerButton.addEventListener("click", async () => {
     if (searchPlayerInput.checkValidity()) {
       const [_, result] = await searchPlayerByName(searchPlayerInput.value)
-      const players: Array<Player> = await Promise.all(result.map((data: unknown) => Player.registerPlayer(data)))
+      const players: Array<Player> = result.map((data: unknown) => Player.registerPlayer(data))
       players.forEach(p => addPlayerInPool(p))
     }
   })
@@ -108,7 +108,7 @@ async function initPage(): Promise<void> {
   displayCardsButton.addEventListener("click", async () => {
     const selectedPlayersIds = getSelectedPlayersIds()
     if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
-      await Promise.all(selectedPlayersIds.map(id => PlayerCardsView.createSinglePlayerCard(id)))
+      await Promise.all(selectedPlayersIds.map(async id => await PlayerCardsView.createSinglePlayerCard(id)))
     }
     document.getElementById("player-cards-view-link").dispatchEvent(new Event("click"));
   })
