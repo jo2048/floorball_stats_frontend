@@ -12,14 +12,6 @@ interface TeamSpan extends HTMLSpanElement {
   team: Team
 }
 
-function generateRandomColor() {
-  const randomBetween = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
-  const r = randomBetween(0, 255);
-  const g = randomBetween(0, 255);
-  const b = randomBetween(0, 255);
-  return `rgba(${r},${g},${b}, 70)`
-}
-
 function createContainer() {
   const container = document.createElement("div")
   container.classList.add("main-div","container-fluid","gap-3","m-3")
@@ -192,7 +184,7 @@ function datediff(first: Date, second: Date): number {
 }
 
 
-async function getTeamData(team: Team, color: string) {
+async function getTeamData(team: Team, color: string) {//, xFunction: (s: Stats) => number, yFunction: (s: Stats) => number) {
   const playersData = await getTeamPlayers(team.id)
   const players: Array<Player> = playersData.map((e: unknown) => Player.registerPlayer(e))
 

@@ -3,6 +3,7 @@ import { Tournament } from "./tournament.js";
 import { Season } from "./season.js";
 import { Player } from "./player.js";
 import { ErrorToast } from "../view/utils.js";
+import { HallRegistry } from "./club.js";
 
 type CompetitionLevel = "SEASON" | "TOURNAMENT"
 type GameOutcome =  "TIE" | "WON" | "LOST"
@@ -173,6 +174,14 @@ class GameCollection {
     return this.games.reduce((sum, g) => sum + g.getGoalsByTeam(), 0);
   }
 
+  getSportHallsCount(): Map<string, number> {
+    return this.games.reduce((count, game) => {
+      const hall = HallRegistry.getSporthallById(game.sporthallId)
+      count.set(hall.name, (count.get(hall.name) || 0) + 1);
+      return count;
+    }, new Map<string, number>());
+  }
+
   getWonTieLostCount() {
     const count: Map<GameOutcome, number> = new Map([
       ["WON", 0],
@@ -186,9 +195,16 @@ class GameCollection {
   static async loadPlayerGameCollection(player:Player) {
     if (!this.gamesByPlayerCache.has(player.id)) {
       const [status, matches] = await fetchPlayerData(player.id, "match")  
-      const games = status != 200 
-        ? []
-        : await Promise.all(matches.list_match.map(async (data: any) => await PlayerGame.createFromData(data)))
+      let games = []
+      if (status == 200) {
+        if (matches.list_match.length > 0) {
+          const sportallList: Array<SportHall> = matches.list_sporthall
+          sportallList.forEach((element: SportHall) => {
+            HallRegistry.getOrRegisterSporthall(element)
+          });
+        }
+        games = await Promise.all(matches.list_match.map(async (data: any) => await PlayerGame.createFromData(data)))
+      }
       this.gamesByPlayerCache.set(player.id, uniqBy(games, (g: Game) => g.id))
       if (status != 200)
         new ErrorToast(player.name).show()

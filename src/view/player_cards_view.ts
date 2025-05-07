@@ -61,7 +61,9 @@ class PlayerCardsView {
         </ul>
         <div class="card-body" id="goals-involvement-div-${player.id}">
         </div>
-        <div class="card-body" id="goals-involvement-div-${player.id}">
+        <div class="card-body" id="sporthalls-div-${player.id}">
+        </div>
+        <div class="card-body">
           <button type="button" class="btn btn-primary" id="player-network-btn-${player.id}">Display most frequent teammates</button>
         </div>
       </div>
@@ -90,6 +92,7 @@ class PlayerCardsView {
     if (stats.gamesPlayed > 0) {
       this.#createWonTieLostChart(player, stats)
       this.#createGoalInvolvementBarChart(player, stats)
+      this.#createSporthallChart(player, gameCollection)
     } else {
       playerTeammatesButton.remove()
       // this.playerCardsDiv.querySelector(`#goals-involvement-div-${player.id}`).remove()
@@ -119,7 +122,8 @@ class PlayerCardsView {
       ]
     };
   
-    const options = getSmallHorizontalBarChartOptions("Won, tie, lost", stats.gamesPlayed)
+    const title = `${roundNumber(100 * stats.won / stats.gamesPlayed)} % of games won`
+    const options = getSmallHorizontalBarChartOptions(title, stats.gamesPlayed)
     return new Chart(canvas , {
       type: "bar", 
       data: data, 
@@ -155,6 +159,14 @@ class PlayerCardsView {
       options: options
     })
   }
+
+  static #createSporthallChart(player: Player, gameCollection: GameCollection) {
+    const div = this.container.querySelector(`#sporthalls-div-${player.id}`) as HTMLDivElement
+    const canvas = document.createElement("canvas")
+    div.appendChild(canvas)
+    const map = gameCollection.getSportHallsCount()
+    createDoughnutChart(canvas, Array.from(map.keys()), Array.from(map.values()))
+  }
 }
 
 function getSmallHorizontalBarChartOptions(title: string, totalItems: number): ChartOptions {
@@ -179,6 +191,19 @@ function getSmallHorizontalBarChartOptions(title: string, totalItems: number): C
   return options;
 }
 
+
+function createDoughnutChart(canvas: HTMLCanvasElement, labels: Array<string>, data: Array<number>): Chart {
+  return new Chart(canvas, {
+    type: "doughnut", data: {
+      labels: labels,
+      datasets: [{
+        // label: player.name,
+        data: data,
+        hoverOffset: 4,
+      }]
+    }
+  })
+}
 
 async function createPolarAreaChart(player: Player, threshold: number): Promise<HTMLCanvasElement> {
   const gameCollection = await GameCollection.loadPlayerGameCollection(player)

@@ -5,6 +5,7 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 import { PlayerCardsView } from "./view/player_cards_view.js";
 import { configTooltips } from "./view/utils.js";
 import { CompareTeamsView } from "./view/compare_teams_view.js";
+import { PlayerDetailedView } from "./view/player_detailed_view.js";
 
 // CONFIG TOOLTIPS
 configTooltips()
@@ -42,6 +43,8 @@ function setFocusedView(view: HTMLElement) {
 document.getElementById("home-view-link").addEventListener("click", () => setFocusedView(homeView))
 
 document.getElementById("player-cards-view-link").addEventListener("click", () => setFocusedView(PlayerCardsView.container))
+
+document.getElementById("player-detailed-view-link").addEventListener("click", () => setFocusedView(PlayerDetailedView.instance.container))
 
 CompareTeamsView.instance.init()
 document.getElementById("compare-teams-view-link").addEventListener("click", () => setFocusedView(CompareTeamsView.instance.container))

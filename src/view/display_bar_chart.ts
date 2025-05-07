@@ -89,31 +89,4 @@ function getStackedBarChartOptions(title: string, displayLegend=true): ChartOpti
   };
 }
 
-// function createDoughnutChart(player: Player, stats: Stats): Chart {
-//   const div = this.container.querySelector(`#game-outcome-div-${player.id}`) as HTMLDivElement
-//   const canvas = document.createElement("canvas")
-//   div.appendChild(canvas)
-//   const gameOutcomes = ['Won', 'Tie', 'Lost']
-//   const gameOutcomesData = {
-//     labels: gameOutcomes,
-//     datasets: [{
-//       label: player.name,
-//       data: [stats.won, stats.tie, stats.lost],
-//       backgroundColor: gameOutcomes.map(e => COLORS[e]),
-//       hoverOffset: 4,
-//     }]
-//   };
-
-//   const doughnutOptions: ChartOptions = {
-//     plugins: {
-//       tooltip: {
-//         enabled: false
-//       }
-//     }
-//   }
-//   return new Chart(canvas, {
-//     type: "doughnut", data: gameOutcomesData, options: doughnutOptions
-//   })
-// }
-
 export { getGroupedBarChartOptions, getStackedBarChartOptions, BarChartInput}

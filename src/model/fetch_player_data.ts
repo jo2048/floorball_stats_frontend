@@ -108,6 +108,7 @@ async function fetchGamePlayers(gameId: number): Promise<[number, Array<GetGameP
   }
 }
 
+
 interface GetGamePlayersResult {
   "assist": number,
   "fault": number,
@@ -129,11 +130,6 @@ interface GetGamePlayersResult {
   "saves"?: number,
   "sex": string,
   "teamid": number
-}
-
-interface GameParticipation {
-  playerId: number,
-  teamId: number
 }
 
 function gamePlayerResultToGameParticipation(gamePlayerResult: GetGamePlayersResult): GameParticipation {

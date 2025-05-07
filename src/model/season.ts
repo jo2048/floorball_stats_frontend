@@ -1,36 +1,14 @@
 import { Config } from "../view/config.js";
+import { ClubRegistry } from "./club.js";
 import { Team } from "./team.js";
 
-interface Club {
-  readonly city: string,
-  readonly coloraway1: string,
-  readonly coloraway2: string,
-  readonly colorhome1: string,
-  readonly colorhome2: string,
-  readonly email: string,
-  readonly halls: Array<any>,
-  readonly id: number,
-  readonly isactive: number,
-  readonly matriculation: number,
-  readonly name: string,
-  readonly phone: string,
-  readonly website: string,
-  getNameFormatted: () => string;
-}
-
-class ClubFactory {
-  static createClub(clubData: Club): Club {
-    clubData.getNameFormatted = () => { return clubData.name }
-    return clubData
-  }
-}
 
 class Season {
   static _instances: Map<number, Season> = null;
 
   readonly startDate: Date
   readonly endDate: Date
-  clubs?: Array<any>
+  clubs: Array<Club>
 
   constructor(readonly id: number, readonly name: string) {
     const re = new RegExp("^\\d{4}-\\d{2}$");
@@ -88,7 +66,7 @@ class Season {
     return Array.from(this._instances.values()).toSorted(this.compare)
   }
 
-  async fetchClubs(): Promise<Array<any>> {
+  async fetchClubs(): Promise<Array<Club>> {
     if (this.clubs == null) {
       const url = Config.getInstance().baseUrl + "public_clubs_getall.php";
       const payload = { seasonid: this.id };
@@ -102,16 +80,16 @@ class Season {
         }
         const json = await response.json();
         delete json.logo
-        this.clubs = json.map((e: any) => ClubFactory.createClub(e))
+        this.clubs = json.map((e: any) => ClubRegistry.getOrRegisterClub(e))
       } catch (error: any) {
         console.error(`Error: ${error.message}`);
-        return [500];
+        return [];
       }
     }
     return this.clubs
   }
 
-  static async fetchSeasonClubs(seasonId: number): Promise<Array<any>> {
+  static async fetchSeasonClubs(seasonId: number): Promise<Array<Club>> {
     if (!seasonId)
       throw new Error("Invalid argument to fetch clubs")
     const season = await this.getSeasonById(seasonId)
