@@ -3,7 +3,8 @@ import type { Player } from "../model/player.js";
 import { Season } from "../model/season.js";
 import { Chart } from "chart.js/auto";
 import { BarChartInput, getGroupedBarChartOptions, getStackedBarChartOptions } from "./display_bar_chart.js";
-import { fillSelect, Spinner } from "./utils.js";
+import { fillSelect } from "./utils.js";
+import { Spinner } from "./spinner.js";
 
 
 const absoluteStatFunctions: {[key: string]: (p: Stats) => number} = {
@@ -26,11 +27,11 @@ function ratioFunction(statType: string, baseStatType: string): (p: Stats) => nu
 class ChartContainer {
   static nextId = 0;
 
-  id: number
+  private id: number
   title: string
   div: HTMLDivElement
-  canvas: HTMLCanvasElement
-  loadSpinner: Spinner
+  private canvas: HTMLCanvasElement
+  private loadSpinner: Spinner
   chart!: Chart
 
   constructor(readonly players: Array<Player>) {
@@ -75,7 +76,7 @@ class ChartContainer {
             <label class="btn btn-outline-success" for="faults-checkbox-${this.id}">Faults</label>
           </div>
         </div>
-        <div class="col-2 d-flex justify-content-end align-self-end">
+        <div id="delete-div-${this.id}" class="col-2 d-flex justify-content-end align-self-end">
           <button class="btn btn-danger align-self-end d-none d-lg-block" id="delete-btn-${this.id}">Delete chart</button>
         </div>
       </div>
@@ -129,6 +130,14 @@ class ChartContainer {
 
   delete() {
     this.div.remove()
+  }
+
+  removeDeleteButton() {
+    this.div.querySelector(`#delete-div-${this.id}`).remove()
+  }
+
+  scrollIntoView() {
+    this.canvas.scrollIntoView()
   }
 
   async #getPlayersStats(filterSeason: Season, groupingCriterion: CompetitionLevel) {
@@ -199,7 +208,7 @@ class ChartContainer {
 
     const datasets = chartInput.getDataset()
 
-    this.chart.data = {
+    this.chart.data = { 
       labels: chartInput.xLabels,
       datasets: datasets
     }

@@ -3,16 +3,22 @@ import { Season } from "./season.js";
 
 
 class Tournament {
-  static emptyTournament = new Tournament(-1, "Empty tournament", new Season(-1, "Empty season"), "Empty division")
+  static emptyTournament = new Tournament(-1, "Empty tournament", new Season(-1, "No season"), 0)
   private static cache: Map<number | string, Tournament> = new Map([
     [-1, this.emptyTournament],
     [null, this.emptyTournament]
   ]);
 
-  constructor(readonly id: number, readonly name: string, readonly season: Season, readonly division: string) { }
+  constructor(readonly id: number, readonly name: string, readonly season: Season, readonly division: number) { }
 
   getNameFormatted() {
     return [this.season.getNameFormatted(), this.name.replace(/\[.*\]/, '').trim()]
+  }
+
+  getDivision(): number {
+    // division attribute is not reliable for the belgium backend, so the division is extracted from tournament name
+    const re = new RegExp("D(ivision)?(\\d)");
+    return parseInt(this.name.match(re)[2])
   }
 
   static async #delay(milliseconds: number){

@@ -42,7 +42,7 @@ function setFocusedView(view: HTMLElement) {
 
 document.getElementById("home-view-link").addEventListener("click", () => setFocusedView(homeView))
 
-document.getElementById("player-cards-view-link").addEventListener("click", () => setFocusedView(PlayerCardsView.container))
+// document.getElementById("player-cards-view-link").addEventListener("click", () => setFocusedView(PlayerCardsView.container))
 
 document.getElementById("player-detailed-view-link").addEventListener("click", () => setFocusedView(PlayerDetailedView.instance.container))
 

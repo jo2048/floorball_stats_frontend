@@ -10,6 +10,19 @@ canvas {
   max-height: 600px;
 }
 
+.scale-on-hover {
+  transition: 0.25s;
+}
+
+.scale-on-hover:hover {
+  transform: scale(1.07);
+}
+
+.lighter {
+  background-color: #fff3cd;
+  border-radius: 10px;
+}
+
 .chart-container {
   background-color: white;
   /* padding: 10px; */

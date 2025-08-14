@@ -11,6 +11,12 @@ class ClubRegistry {
     }
     return this.clubCache.get(clubData.id)
   }
+
+  static getClubById(clubId: number): Club | null {
+    if (this.clubCache.has(clubId)) 
+      return this.clubCache.get(clubId)
+    return null
+  }
 }
 
 class HallRegistry {

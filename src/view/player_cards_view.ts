@@ -3,8 +3,7 @@ import { Player } from "../model/player";
 import { type ActiveElement, Chart, Tooltip, type ChartOptions, type Point } from "chart.js/auto";
 import { COLORS } from "./config";
 import { getStackedBarChartOptions } from "./display_bar_chart";
-import { Modal, roundNumber, Spinner } from "./utils";
-import { getGamePlayersFilteredByTeam } from "../model/fetch_player_data";
+import { roundNumber } from "./utils";
 
 Tooltip.positioners.chartCenter = function(items: ActiveElement[], eventPosition: Point) {
   const chart: Chart = this.chart;
@@ -31,11 +30,10 @@ class PlayerCardsView {
     return stats.goalsByTeam == 0 ? 0 : (stats.goals + stats.assists) / stats.goalsByTeam
   }
 
-  static async createSinglePlayerCard(playerId: number): Promise<void> {
-    if (this.displayedPlayerIds.has(playerId))
+  static async createSinglePlayerCard(player: Player): Promise<void> {
+    if (this.displayedPlayerIds.has(player.id))
       return;
-    this.displayedPlayerIds.add(playerId)
-    const player: Player = await Player.getPlayerById(playerId)
+    this.displayedPlayerIds.add(player.id)
     const gameCollection = await GameCollection.loadPlayerGameCollection(player)
     const stats = gameCollection.computeStats()
 
@@ -58,13 +56,11 @@ class PlayerCardsView {
           <li class="list-group-item bg-secondary-subtle"">${stats.gamesPlayed} games played</li>
           <li class="list-group-item">First game played: ${sortedGames.length > 0 ? sortedGames[0].date.toLocaleDateString() : "Never played yet"}</li>
           <li class="list-group-item">Last game played: ${sortedGames.length > 0 ? sortedGames[sortedGames.length - 1].date.toLocaleDateString() : "Never played yet"}</li>
+          <li class="list-group-item">Number of matches D1 / D2 / D3</li>
         </ul>
         <div class="card-body" id="goals-involvement-div-${player.id}">
         </div>
-        <div class="card-body" id="sporthalls-div-${player.id}">
-        </div>
         <div class="card-body">
-          <button type="button" class="btn btn-primary" id="player-network-btn-${player.id}">Display most frequent teammates</button>
         </div>
       </div>
     `)
@@ -77,26 +73,10 @@ class PlayerCardsView {
       this.displayedPlayerIds.delete(player.id)
     })
 
-    const playerTeammatesButton = this.container.querySelector(`#player-network-btn-${player.id}`) as HTMLButtonElement
-    playerTeammatesButton.addEventListener("click", async () => {
-      const div = document.createElement("div")
-      const spinner = new Spinner()
-      div.appendChild(spinner.container)
-      Modal.showContent(div)
-      Modal.setText("Number of games played with most frequent teammates - " + player.name)
-      const canvas = await createPolarAreaChart(player, Math.round(stats.gamesPlayed * 0.2))
-      spinner.hide()
-      div.appendChild(canvas)
-    })
     
     if (stats.gamesPlayed > 0) {
       this.#createWonTieLostChart(player, stats)
       this.#createGoalInvolvementBarChart(player, stats)
-      this.#createSporthallChart(player, gameCollection)
-    } else {
-      playerTeammatesButton.remove()
-      // this.playerCardsDiv.querySelector(`#goals-involvement-div-${player.id}`).remove()
-      // this.playerCardsDiv.querySelector(`#game-outcome-div-${player.id}`).remove()
     }
   }
 
@@ -159,14 +139,6 @@ class PlayerCardsView {
       options: options
     })
   }
-
-  static #createSporthallChart(player: Player, gameCollection: GameCollection) {
-    const div = this.container.querySelector(`#sporthalls-div-${player.id}`) as HTMLDivElement
-    const canvas = document.createElement("canvas")
-    div.appendChild(canvas)
-    const map = gameCollection.getSportHallsCount()
-    createDoughnutChart(canvas, Array.from(map.keys()), Array.from(map.values()))
-  }
 }
 
 function getSmallHorizontalBarChartOptions(title: string, totalItems: number): ChartOptions {
@@ -191,77 +163,5 @@ function getSmallHorizontalBarChartOptions(title: string, totalItems: number): C
   return options;
 }
 
-
-function createDoughnutChart(canvas: HTMLCanvasElement, labels: Array<string>, data: Array<number>): Chart {
-  return new Chart(canvas, {
-    type: "doughnut", data: {
-      labels: labels,
-      datasets: [{
-        // label: player.name,
-        data: data,
-        hoverOffset: 4,
-      }]
-    }
-  })
-}
-
-async function createPolarAreaChart(player: Player, threshold: number): Promise<HTMLCanvasElement> {
-  const gameCollection = await GameCollection.loadPlayerGameCollection(player)
-  const playerIdsArray = await Promise.all(gameCollection.games.map(g => getGamePlayersFilteredByTeam(g.id, player.id)))
-  let count: Record<number, number> = {};
-  playerIdsArray.flat().forEach((val: number) => count[val] = (count[val] || 0) + 1);
-
-  const x = await Promise.all(
-    Object.entries(count)
-      .filter(([key, value]) => parseInt(key) != player.id)
-      .filter(([_, value]) => value > threshold)
-      .map(async ([key, value]) => {
-        const p = await Player.getPlayerById(parseInt(key));
-        return [p.name, value];
-      })
-  );
-  const playerCount: Record<string, number> = Object.fromEntries(x)
-
-  const canvas = document.createElement("canvas")
-
-  const chart = new Chart(canvas , {
-    type: "polarArea", 
-    data: {
-      labels: Array.from(Object.keys(playerCount)),
-      datasets: [{
-        data: Array.from(Object.values(playerCount))
-      }]
-    }, 
-    options: getPolarOptions(player.name)
-  })
-
-  return canvas
-}
-
-function getPolarOptions(title: string): ChartOptions {
-  return {
-    responsive: true,
-    scales: {
-      r: {
-        pointLabels: {
-          display: true,
-          centerPointLabels: true,
-          font: {
-            size: 18
-          }
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      title: {
-        display: true,
-        text: title
-      }
-    }
-  }
-};
 
 export { PlayerCardsView };

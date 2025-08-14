@@ -11,14 +11,19 @@ class Season {
   clubs: Array<Club>
 
   constructor(readonly id: number, readonly name: string) {
-    const re = new RegExp("^\\d{4}-\\d{2}$");
-    if (!re.test(this.name)) {
-      this.startDate = new Date(parseInt(this.name.split(" ")[1].slice(0, 4)), 7, 1);
-      this.endDate = new Date(parseInt(this.name.slice(-4)), 6, 31);
+    const pattern1 = new RegExp("^\\d{4}-\\d{2}$");
+    const pattern2 = new RegExp("^\\d{4}-\\d{4}$")
+    if (pattern1.test(this.name)) {
+      this.startDate = new Date(parseInt(this.name.slice(0, 4)), 9, 1);
+      this.endDate = new Date(parseInt("20" + this.name.slice(-2)), 8, 31);
+    }
+    else if (pattern2.test(this.name)) {
+      this.startDate = new Date(parseInt(this.name.slice(0, 4)), 9, 1);
+      this.endDate = new Date(parseInt(this.name.slice(-4)), 8, 31);
     }
     else {
-      this.startDate = new Date(parseInt(this.name.slice(0, 4)), 7, 1);
-      this.endDate = new Date(parseInt("20" + this.name.slice(-2)), 6, 31);
+      this.startDate = new Date(parseInt(this.name.split(" ")[1].slice(0, 4)), 9, 1);
+      this.endDate = new Date(parseInt(this.name.slice(-4)), 8, 31);
     }
     this.clubs = null
   }
@@ -64,6 +69,14 @@ class Season {
       await this.fetchAllSeasons();
     }
     return Array.from(this._instances.values()).toSorted(this.compare)
+  }
+
+  static async getCurrentSeason(): Promise<Season> {
+    if (!this._instances) {
+      await this.fetchAllSeasons();
+    }   
+    const currentDate = new Date(Date.now())
+    return Array.from(this._instances.values()).filter(s => s.startDate <= currentDate && s.endDate > currentDate)[0]
   }
 
   async fetchClubs(): Promise<Array<Club>> {

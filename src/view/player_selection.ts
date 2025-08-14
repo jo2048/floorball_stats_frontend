@@ -1,17 +1,13 @@
 import { Season } from "../model/season.js"
 import { Player } from "../model/player.js"
 import { ChartContainer } from "./chart_container.js"
-import { getTeamPlayers, searchPlayerByName } from "../model/fetch_player_data.js"
-import { PlayerCardsView } from "./player_cards_view.js";
-import { fillSelect, Modal } from "./utils.js";
+import { getTeamPlayers } from "../model/fetch_player_data.js"
+import { createPlayerSelectionCard, createSearchPlayerDiv, fillSelect, Modal, PlayerSelectionCard } from "./utils.js";
 
 const seasonSelect = document.getElementById("season-select") as HTMLSelectElement
 const clubSelect = document.getElementById("club-select") as HTMLSelectElement
 const teamSelect = document.getElementById("team-select") as HTMLSelectElement
 const searchTeamPlayersButton = document.getElementById("search-team-players-btn") as HTMLButtonElement
-
-const searchPlayerInput = document.getElementById("search-player-input") as HTMLInputElement
-const searchPlayerButton = document.getElementById("search-player-button") as HTMLButtonElement
 
 const playersPoolDiv = document.getElementById("players-pool-div") as HTMLDivElement
 const unselectAllButton = document.getElementById("player-pool-unselect-all-button") as HTMLButtonElement
@@ -19,16 +15,19 @@ const selectAllButton = document.getElementById("player-pool-select-all-button")
 const removeUnselectedButton = document.getElementById("player-pool-remove-unselected-button") as HTMLButtonElement
 const createChartButton = document.getElementById("create-chart-button") as HTMLButtonElement
 const displayChartButton = document.getElementById("display-chart-button") as HTMLButtonElement
-const displayCardsButton = document.getElementById("display-cards-button") as HTMLButtonElement
+// const displayCardsButton = document.getElementById("display-cards-button") as HTMLButtonElement
 
 async function initPage(): Promise<void> {
   const sortedSeasons = await Season.getSeasonsSorted()
-  
+  const currentSeason = await Season.getCurrentSeason()
+
   fillSelect(seasonSelect, sortedSeasons)
+  seasonSelect.selectedIndex = Array.from(seasonSelect.options).filter(option => parseInt(option.value) == currentSeason.id)[0].index
+
   seasonSelect.addEventListener("change", async () => {
     const clubs = await Season.fetchSeasonClubs(parseInt(seasonSelect.value))
     fillSelect(clubSelect, clubs)
-    clubSelect.dispatchEvent(new Event("change"))
+     clubSelect.dispatchEvent(new Event("change"))
   })
   
   clubSelect.addEventListener("change", async () => {
@@ -47,33 +46,19 @@ async function initPage(): Promise<void> {
   
   seasonSelect.dispatchEvent(new Event("change"))
 
-
-  searchPlayerInput.addEventListener("change", () => updateSearchPlayerBtn())
-  searchPlayerInput.addEventListener("keyup", () => updateSearchPlayerBtn())
-  searchPlayerInput.dispatchEvent(new Event("keyup"))
-
-  searchPlayerButton.addEventListener("click", async () => {
-    if (searchPlayerInput.checkValidity()) {
-      const [_, result] = await searchPlayerByName(searchPlayerInput.value)
-      const players: Array<Player> = result.map((data: unknown) => Player.registerPlayer(data))
-      players.forEach(p => addPlayerInPool(p))
-    }
-  })
+  const div = createSearchPlayerDiv((player: Player) => addPlayerInPool(player))
+  document.getElementById("search-by-name-h5").insertAdjacentElement('afterend', div)
 
   /* ---------------------------------------------------------------------------- */
 
 
   unselectAllButton.addEventListener("click", () => {
-    playerInPool.forEach((v, k) => {
-      changeStatus(v, "not-selected")
-    });
+    playerInPool.forEach((v, _) => v.unselect());
     updateCreateChartButton()
   })
 
   selectAllButton.addEventListener("click", () => {
-    playerInPool.forEach((v, k) => {
-      changeStatus(v, "selected")
-    });
+    playerInPool.forEach((v, _) => v.select());
     updateCreateChartButton()
   })
 
@@ -87,41 +72,38 @@ async function initPage(): Promise<void> {
   })
 
   createChartButton.addEventListener("click", async () => {
-    const selectedPlayersIds = getSelectedPlayersIds()
+    const selectedPlayers = getSelectedPlayers()
 
-    if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) 
-      await createCollapsibleChart(selectedPlayersIds)
+    if (selectedPlayers.length > 0 && selectedPlayers.length <= 20) 
+      await createCollapsibleChart(selectedPlayers)
   })
 
   displayChartButton.addEventListener("click", async () => {
-    const selectedPlayersIds = getSelectedPlayersIds()
+    const selectedPlayers = getSelectedPlayers()
 
-    if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
-      const selectedPlayers = await Promise.all(selectedPlayersIds.map(async id => await Player.getPlayerById(id)))
+    if (selectedPlayers.length > 0 && selectedPlayers.length <= 20) {
       const chartContainer = new ChartContainer(selectedPlayers);
       Modal.showContent(chartContainer.div)
-      Modal.setText(selectedPlayersIds.length == 1 ? "Chart - " + chartContainer.title : "Chart")
+      Modal.setText(selectedPlayers.length == 1 ? "Chart - " + chartContainer.title : "Chart")
       await chartContainer.display()
     }
   })
 
-  displayCardsButton.addEventListener("click", async () => {
-    const selectedPlayersIds = getSelectedPlayersIds()
-    if (selectedPlayersIds.length > 0 && selectedPlayersIds.length <= 20) {
-      await Promise.all(selectedPlayersIds.map(async id => await PlayerCardsView.createSinglePlayerCard(id)))
-    }
-    document.getElementById("player-cards-view-link").dispatchEvent(new Event("click"));
-  })
+  // displayCardsButton.addEventListener("click", async () => {
+  //   const selectedPlayers = getSelectedPlayers()
+  //   if (selectedPlayers.length > 0 && selectedPlayers.length <= 20) {
+  //     await Promise.all(selectedPlayers.map(async player => await PlayerCardsView.createSinglePlayerCard(player)))
+  //   }
+  //   document.getElementById("player-cards-view-link").dispatchEvent(new Event("click"));
+  // })
 
 
   updateCreateChartButton()
 }
 
-async function createCollapsibleChart(playerIds: Array<number>) {
-  const selectedPlayers = await Promise.all(playerIds.map(async id => await Player.getPlayerById(id)))
-
+async function createCollapsibleChart(players: Array<Player>) {
   const details = document.createElement("details")
-  const chartContainer = new ChartContainer(selectedPlayers);
+  const chartContainer = new ChartContainer(players);
   chartContainer.delete = () => details.remove()
   details.appendChild(chartContainer.div)
   //TODO : remove details when deleting chartContainer
@@ -133,45 +115,27 @@ async function createCollapsibleChart(playerIds: Array<number>) {
   document.getElementById("chartsDiv").appendChild(details)
   details.scrollIntoView()
   await chartContainer.display()
-  chartContainer.canvas.scrollIntoView()
+  chartContainer.scrollIntoView()
 }
 
-function changeStatus(span: HTMLSpanElement, newStatus: string) {
-  span.setAttribute("status", newStatus)
-  if (newStatus == "selected") {
-    span.classList.remove("text-bg-secondary")
-    span.classList.add("text-bg-success")
-  } else {
-    span.classList.remove("text-bg-success")
-    span.classList.add("text-bg-secondary")
-  }
-}
-
-function createPlayerSpan(player: Player) {
-  const span = document.createElement("span")
-  span.innerHTML = `${player.name}</br>${player.getAge() > 100 ? "unknown" : player.getAge() + " years old"}</br>${player.currentClubName}`
-  span.setAttribute("class", "badge text-bg-success")
-  span.setAttribute("status", "selected")
-  span.addEventListener("click", () => {
-    const newStatus = span.getAttribute("status") == "selected" ? "not-selected" : "selected"
-    changeStatus(span, newStatus)
-    updateCreateChartButton()
-  })
-  return span
-}
-
-var playerInPool: Map<number, HTMLSpanElement> = new Map()
+var playerInPool: Map<number, PlayerSelectionCard> = new Map()
 
 function addPlayerInPool(player: Player) {
   if (!playerInPool.has(player.id)) {
-    playerInPool.set(player.id, createPlayerSpan(player))
-    document.getElementById("selected-players-labels").appendChild(playerInPool.get(player.id))
+    const card = createPlayerSelectionCard(player)
+    card.select()
+    card.addEventListener("click", () => {
+      if (card.status == "selected") card.unselect(); else card.select()
+      updateCreateChartButton()
+    })
+    playerInPool.set(player.id, card)
+    document.getElementById("selected-players-labels").appendChild(card)
     updateCreateChartButton()
   }
 }
 
 function updateCreateChartButton() {
-  const selectedPlayersCount = getSelectedPlayersIds().length
+  const selectedPlayersCount = getSelectedPlayers().length
   
   if (selectedPlayersCount > 0 && selectedPlayersCount <= 20) {
     playersPoolDiv.querySelectorAll(".create-chart-btn").forEach(btn => {
@@ -199,26 +163,10 @@ function updateCreateChartButton() {
   playersPoolDiv.querySelectorAll(".selected-players-badge").forEach(e => e.textContent = selectedPlayersCount.toString())
 }
 
-function updateSearchPlayerBtn() {  
-  searchPlayerInput.classList.remove("border-danger")
-  if (!searchPlayerInput.checkValidity()) {
-    searchPlayerButton.disabled = true
-    searchPlayerButton.classList.remove("btn-success")
-    searchPlayerButton.classList.add("btn-secondary")
-    if (searchPlayerInput.value) 
-      searchPlayerInput.classList.add("border-danger")
-  }
-  else {
-    searchPlayerButton.disabled = false
-    searchPlayerButton.classList.remove("btn-secondary")
-    searchPlayerButton.classList.add("btn-success")
-  }
-}
-
-function getSelectedPlayersIds() {
-  return Array.from(playerInPool.entries())
-    .filter(([_, v]) => v.getAttribute("status") == "selected")
-    .map(([k, _]) => k)
+function getSelectedPlayers(): Array<Player> {
+  return Array.from(playerInPool.values())
+    .filter(card => card.status == "selected")
+    .map(card => card.player)
 }
 
 

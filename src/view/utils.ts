@@ -1,5 +1,10 @@
 declare var bootstrap: any;
 
+import { Chart } from "chart.js";
+import { searchPlayerByName } from "../model/fetch_player_data.js"
+import { Player } from "../model/player";
+import { COLORS } from "./config.js";
+
 function fillSelect(select: HTMLSelectElement, values: Array<any>) {
   select.querySelectorAll("option").forEach((e) => e.remove());
   for (const elt of values) {
@@ -18,6 +23,106 @@ function configTooltips() {
   const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
   const _ = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
+
+function createSearchPlayerDiv(addPlayerFunction: CallableFunction): HTMLDivElement {
+  const template = document.createElement("template")
+  template.innerHTML = `<div class="mb-3 d-flex flex-row column-gap-2" >
+          <input type="search" required minlength="3" maxlength="15" size="15" placeholder="Doe John" pattern="[a-zA-Z \\-]+">
+          <button class="btn btn-secondary" type="button">Search players by name</button>
+        </div>`
+  
+  const divElement = template.content.firstChild as HTMLDivElement
+  const inputElement = divElement.querySelector("input")
+  const buttonElement = divElement.querySelector("button")
+
+
+  function updateSearchPlayerBtn() {  
+    inputElement.classList.remove("border-danger")
+    if (!inputElement.checkValidity()) {
+      buttonElement.disabled = true
+      buttonElement.classList.remove("btn-success")
+      buttonElement.classList.add("btn-secondary")
+      if (inputElement.value) 
+        inputElement.classList.add("border-danger")
+    }
+    else {
+      buttonElement.disabled = false
+      buttonElement.classList.remove("btn-secondary")
+      buttonElement.classList.add("btn-success")
+    }
+  }
+
+  inputElement.addEventListener("change", () => updateSearchPlayerBtn())
+  inputElement.addEventListener("keyup", () => updateSearchPlayerBtn())
+  inputElement.dispatchEvent(new Event("keyup"))
+
+  buttonElement.addEventListener("click", async () => {
+    if (inputElement.checkValidity()) {
+      const [_, result] = await searchPlayerByName(inputElement.value)
+      const players: Array<Player> = result.map((data: unknown) => Player.registerPlayer(data))
+      players.forEach(p => addPlayerFunction(p))
+    }
+  })
+
+  return divElement
+}
+
+
+interface PlayerSelectionCard extends HTMLDivElement {
+  select: () => void
+  unselect: () => void
+  status: "selected" | "not selected"
+  player: Player
+}
+
+
+function createPlayerSelectionCard(player: Player): PlayerSelectionCard {
+  const template = document.createElement("template")
+  template.insertAdjacentHTML("beforeend", `<div 
+    class="card bg-secondary-subtle rounded-5 scale-on-hover">
+    <div class="card-body p-3 sm:p-6 pe-auto" role="button">
+      <div class="flex-1 min-w-0 gap-2">
+        <h4 class="card-title text-lg sm:text-xl mb-3">
+          ${player.getNameFormatted()}
+        </h4>
+        <h6 cslass="mb-0">
+          <span class="badge px-3 py-2 text-secondary-emphasis border rounded-pill bg-warning-subtle">
+            ${player.getAge() > 100 ? "age unknown" : player.getAge() + " years old"}
+          </span>
+        </h6>
+        <h6 class="mb-0">
+          <span class="badge px-3 py-2 text-secondary-emphasis border rounded-pill bg-warning-subtle">
+            ${player.currentClubName}
+          </span>
+        </h6>
+      </div>
+    </div>
+  </div>
+   `
+  )
+  const card = template.firstElementChild as PlayerSelectionCard
+
+  card.player = player
+  card.status = "not selected"
+
+  card.select = () => {
+    // span.classList.remove("text-secondary-emphasis", "bg-secondary-subtle", "border-secondary-subtle")
+    // span.classList.add("text-primary-emphasis", "bg-primary-subtle", "border-primary-subtle")
+    // selectIcon.classList.remove("bi-circle")
+    // selectIcon.classList.add("bi-check-circle")
+    card.classList.remove("bg-secondary-subtle")
+    card.classList.add("bg-success-subtle")
+    card.status = "selected"
+  }
+
+  card.unselect = () => {
+    card.classList.remove("bg-success-subtle")
+    card.classList.add("bg-secondary-subtle")
+    card.status = "not selected"
+  }
+  return card
+}
+
 
 class ErrorToast {
   static toastContainer: HTMLDivElement
@@ -84,29 +189,28 @@ class Modal {
   }
 }
 
-class Spinner {
-  readonly container: HTMLDivElement
-  constructor() {
-    this.container = document.createElement("div")
-    this.container.classList.add("d-flex","justify-content-center")
-    const spinner = document.createElement("div")
-    spinner.classList.add("spinner-border","loading-spinner")
-    spinner.setAttribute("role", "status")
-    this.container.appendChild(spinner)
 
-    const span = document.createElement("span")
-    span.classList.add("visually-hidden")
-    span.textContent = "Loading..."
-    spinner.appendChild(span)
-  }
-
-  show() {
-    this.container.classList.remove("d-none")
-  }
-
-  hide() {
-    this.container.classList.add("d-none")
-  }
+function createDoughnutChart(canvas: HTMLCanvasElement, labels: Array<string>, data: Array<number>, title: string): Chart {
+  return new Chart(canvas, {
+    type: "doughnut", 
+    data: {
+      labels: labels,
+      datasets: [{
+        // label: player.name,
+        data: data,
+        hoverOffset: 4,
+        backgroundColor: labels.filter(label => COLORS[label] == null).length == 0 ? labels.map(label => COLORS[label]) : null
+      }]
+    },
+    options: {
+      plugins: {
+        title: {
+          display: title!=null,
+          text: title
+        }
+      }
+    }
+  })
 }
 
-export { fillSelect, roundNumber, configTooltips, ErrorToast, Modal, Spinner }
+export { fillSelect, roundNumber, configTooltips, ErrorToast, Modal, createSearchPlayerDiv, createPlayerSelectionCard, PlayerSelectionCard, createDoughnutChart }

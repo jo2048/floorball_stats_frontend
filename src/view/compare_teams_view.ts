@@ -2,9 +2,10 @@ import { Chart } from "chart.js/auto";
 import { getTeamPlayers } from "../model/fetch_player_data";
 import { Player } from "../model/player";
 import { Season } from "../model/season";
-import { fillSelect, roundNumber, Spinner } from "./utils";
+import { fillSelect, roundNumber } from "./utils";
+import { Spinner } from "./spinner";
 import { Team } from "../model/team";
-import { GameCollection, Stats } from "../model/game";
+import { GameCollection } from "../model/game";
 
 
 interface TeamSpan extends HTMLSpanElement {
@@ -49,7 +50,7 @@ class CompareTeamsView {
     );
 
     this.selectedTeamsDiv = document.createElement("div");
-    this.selectedTeamsDiv.classList.add("container-fluid","d-flex","gap-2","m-3","justify-content-center")
+    this.selectedTeamsDiv.classList.add("container-fluid","d-flex","flex-wrap","gap-2","m-3","justify-content-center")
     this.container.appendChild(this.selectedTeamsDiv);
 
     this.spinner = new Spinner()
@@ -68,7 +69,7 @@ class CompareTeamsView {
   }
 
   createSelectedTeamBadge(team: Team) {
-    const color = "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0")
+    const color = team.getColor() == null ? "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0") : team.getColor()
 
     const template = document.createElement("template")
     template.insertAdjacentHTML("beforeend", `
@@ -78,7 +79,7 @@ class CompareTeamsView {
           ${team.getNameFormatted()}
         </span>  
         <span class="vr mx-2"></span>
-        <a href="#" class="link-dark delete-link me-1" aria-label="Delete success"><i class="bi bi-x-circle-fill h5"></i></a>
+        <div class="delete-link me-1" role="button" aria-label="Delete success"><i class="bi bi-x-circle-fill h5"></i></div>
       </span>`
     )
     const span = template.firstElementChild as TeamSpan
@@ -105,13 +106,13 @@ class CompareTeamsView {
     const teamSelect = this.container.querySelector("#team-select-view1") as HTMLSelectElement;
     const addTeamBtn = this.container.querySelector("#add-team-view1");
 
-    const seasons = await Season.getSeasonsSorted();
-    const clubs = await Season.fetchSeasonClubs(seasons[0].id);
+    const currentSeason = await Season.getCurrentSeason();
+    const clubs = await Season.fetchSeasonClubs(currentSeason.id);
     fillSelect(clubSelect, clubs);
 
     clubSelect.addEventListener("change", async () => {
       const [_, teams] = await Season.fetchTeamsBySeasonAndClub(
-        seasons[0].id,
+        currentSeason.id,
         parseInt(clubSelect.value)
       );
       fillSelect(teamSelect, teams);
