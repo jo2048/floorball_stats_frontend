@@ -1,12 +1,13 @@
 import { Config } from "../view/config.js";
+import { getOrFetchData } from "./cache.js";
 import { Season } from "./season.js";
 
 
 class Tournament {
   static emptyTournament = new Tournament(-1, "Empty tournament", new Season(-1, "No season"), 0)
-  private static cache: Map<number | string, Tournament> = new Map([
-    [-1, this.emptyTournament],
-    [null, this.emptyTournament]
+  private static cache: Map<string, Tournament> = new Map([
+    ["-1", this.emptyTournament],
+    ["null", this.emptyTournament]
   ]);
 
   constructor(readonly id: number, readonly name: string, readonly season: Season, readonly division: number) { }
@@ -21,27 +22,12 @@ class Tournament {
     return parseInt(this.name.match(re)[2])
   }
 
-  static async #delay(milliseconds: number){
-    return new Promise(resolve => {
-      setTimeout(resolve, milliseconds);
-    });
-  }
-
-  static async getTournamentById(tournamentId: number) {
-    while (this.cache.has("wait-for-"+tournamentId))
-      await this.#delay(50)
-    if (!this.cache.has(tournamentId)) {
-      this.cache.set("wait-for-"+tournamentId, null)
-      const [_, tournamentData] = await fetchTournament(tournamentId);
-      const season = await Season.getSeasonById(tournamentData["season_id"]);
-      this.cache.delete("wait-for-"+tournamentId)
-      this.cache.set(tournamentId, new Tournament(tournamentId, tournamentData["name"], season, tournamentData["division"]));
-    }
-    return this.cache.get(tournamentId);
+  static async getTournamentById(tournamentId: number): Promise<Tournament> {
+    return await getOrFetchData<Tournament>(this.cache, fetchTournament, ""+tournamentId)
   }
 }
 
-async function fetchTournament(tournamentId: number): Promise<[number, any]> {
+async function fetchTournament(tournamentId: number): Promise<[number, Tournament]> {
   const url = Config.getInstance().baseUrl + "public_tournament_get.php";
   const payload = { id: tournamentId, command: "get" };
   try {
@@ -52,8 +38,9 @@ async function fetchTournament(tournamentId: number): Promise<[number, any]> {
     if (!response.ok) {
       throw new Error(`Response status: ${response.status} for tournamentId= ${tournamentId}`);
     }
-    const json = await response.json();
-    return [response.status, json];
+    const data = await response.json();
+    const season = await Season.getSeasonById(data["season_id"]);
+    return [response.status, new Tournament(tournamentId, data["name"], season, data["division"])];
   } catch (error) {
     console.error(`Error fetching tournament data: ${error.message}`);
     return [500, null];

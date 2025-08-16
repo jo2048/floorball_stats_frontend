@@ -6,13 +6,14 @@ import { PlayerCardsView } from "./view/player_cards_view.js";
 import { configTooltips } from "./view/utils.js";
 import { CompareTeamsView } from "./view/compare_teams_view.js";
 import { PlayerDetailedView } from "./view/player_detailed_view.js";
+import { Season } from "./model/season.js";
 
 // CONFIG TOOLTIPS
 configTooltips()
 
 // CONFIG CHARTJS
 Chart.register(ChartDataLabels);
-
+await Season.init()
 
 // UPDATE LABELS DEPENDING ON CONFIG
 Array.from(document.getElementsByClassName("main-title")).forEach(element => {

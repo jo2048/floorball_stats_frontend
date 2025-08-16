@@ -58,8 +58,6 @@ class ChartContainer {
             <label class="btn btn-outline-primary" for="stats-btn-${this.id}">Stats</label>
             <input type="radio" id="won-tie-lost-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off"/>
             <label class="btn btn-outline-primary" for="won-tie-lost-btn-${this.id}">Won, tie, lost</label>
-            <input type="radio" id="goals-participation-btn-${this.id}" class="btn-check" name="btnradio${this.id}" autocomplete="off"/>
-            <label class="btn btn-outline-primary" for="goals-participation-btn-${this.id}">Goals involvement</label>
           </div>
           <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
             <input type="checkbox" class="btn-check" id="ratio-checkbox-${this.id}" autocomplete="off">
@@ -109,7 +107,7 @@ class ChartContainer {
       seasonCheckbox.addEventListener("click", async () => {
         seasonSelect.style.display = seasonCheckbox.checked ? "block" : "none"
         const seasons = await this.#getDistinctSeasons()
-        fillSelect(seasonSelect, Array.from(seasons).toSorted(Season.compare))
+        fillSelect(seasonSelect, Season.sortSeasons(Array.from(seasons)))
       })
       seasonSelect.addEventListener("change", () => this.display())
     }
@@ -184,9 +182,7 @@ class ChartContainer {
     const ratioCheckbox = this.div.querySelector(`#ratio-checkbox-${this.id}`) as HTMLInputElement
     const statFunctions = !ratioCheckbox.checked 
       ? (statType: string) => absoluteStatFunctions[statType]
-      : ((this.div.querySelector(`#goals-participation-btn-${this.id}`) as HTMLInputElement).checked) 
-        ? (statType: string) => ratioFunction(statType, "Goals by team")
-        : (statType: string) => ratioFunction(statType, "Games played");
+      : (statType: string) => ratioFunction(statType, "Games played");
     
     const seasonFilter = (this.players.length != 1 && (this.div.querySelector(`#season-checkbox-${this.id}`) as HTMLInputElement).checked) 
       ? await Season.getSeasonById(parseInt((this.div.querySelector(`#season-select-${this.id}`) as HTMLSelectElement).value)) 

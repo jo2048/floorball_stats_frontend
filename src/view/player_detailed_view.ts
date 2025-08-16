@@ -10,10 +10,9 @@ function createContainer() {
   const template = document.createElement("template")
   template.insertAdjacentHTML("beforeend", `<div class="view col-12 col-xl-10">
   <div class="main-div container-fluid">
-    <h5>Search player</h5>
     <div class="container-fluid d-flex flex-wrap gap-3 m-3 justify-content-center cards-div"></div>
   </div>
-  <div class="main-div container-fluid">
+  <div class="player-charts-div main-div container-fluid">
     <div class="row m-2">
       <div class="col-sm-4">
         <div class="won-tie-lost-div lighter d-flex justify-content-center p-3"></div>
@@ -47,6 +46,7 @@ class PlayerDetailedView {
   readonly container: HTMLDivElement
   title: HTMLHeadingElement
   public focusedCard: PlayerSelectionCard
+  chartsDiv: HTMLDivElement
   cardsDiv: HTMLDivElement
   wonTieLostDiv: HTMLDivElement
   goalInvolvementDiv: HTMLDivElement
@@ -60,11 +60,14 @@ class PlayerDetailedView {
 
     const div = createSearchPlayerDiv((player: Player) => this.addPlayer(player))
     this.cardsDiv.insertAdjacentElement('beforebegin', div)
+    this.chartsDiv = this.container.querySelector("div.player-charts-div")
     this.wonTieLostDiv = this.container.querySelector("div.won-tie-lost-div")
     this.goalInvolvementDiv = this.container.querySelector("div.goal-involvement-div")
     this.sporthallDiv = this.container.querySelector("div.sporthall-div")
     this.teammatesDiv = this.container.querySelector("div.teammates-div")
     this.barChartDiv = this.container.querySelector("div.bar-chart-div")
+
+    this.chartsDiv.style.display = "none"
   }
 
   addPlayer(player: Player) {
@@ -77,6 +80,7 @@ class PlayerDetailedView {
       }
       if (currentFocusedCard == null || currentFocusedCard.player.id != player.id) {
         PlayerDetailedView.instance.focusedCard = card
+        this.chartsDiv.style.display = "block"
         card.select()
         const gameCollection = await GameCollection.loadPlayerGameCollection(card.player)
         const stats = gameCollection.computeStats()

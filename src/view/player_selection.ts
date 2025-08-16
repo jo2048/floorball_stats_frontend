@@ -18,29 +18,28 @@ const displayChartButton = document.getElementById("display-chart-button") as HT
 // const displayCardsButton = document.getElementById("display-cards-button") as HTMLButtonElement
 
 async function initPage(): Promise<void> {
-  const sortedSeasons = await Season.getSeasonsSorted()
-  const currentSeason = await Season.getCurrentSeason()
+  const seasons = Season.getSeasonsSorted()
+  const currentSeason = Season.getCurrentSeason()
 
-  fillSelect(seasonSelect, sortedSeasons)
+  fillSelect(seasonSelect, Season.sortSeasons(seasons))
   seasonSelect.selectedIndex = Array.from(seasonSelect.options).filter(option => parseInt(option.value) == currentSeason.id)[0].index
 
   seasonSelect.addEventListener("change", async () => {
-    const clubs = await Season.fetchSeasonClubs(parseInt(seasonSelect.value))
+    const clubs = await Season.getClubsBySeason(parseInt(seasonSelect.value))
     fillSelect(clubSelect, clubs)
-     clubSelect.dispatchEvent(new Event("change"))
+    clubSelect.dispatchEvent(new Event("change"))
   })
   
   clubSelect.addEventListener("change", async () => {
-    const [_, teams] = await Season.fetchTeamsBySeasonAndClub(parseInt(seasonSelect.value), parseInt(clubSelect.value))
+    const teams = await Season.getTeamsBySeasonAndClub(parseInt(seasonSelect.value), parseInt(clubSelect.value))
     fillSelect(teamSelect, teams)
   })
   
   
   searchTeamPlayersButton.addEventListener("click", async () => {
     const data = await getTeamPlayers(parseInt(teamSelect.value))
-    const clubName = clubSelect.options[clubSelect.selectedIndex].text
     const players: Array<Player> = await Promise.all(data.map((e: unknown) => Player.registerPlayer(e)))
-    players.forEach(p => p.currentClubName = clubName)
+    players.forEach(p => p.currentClubId = parseInt(clubSelect.value))
     players.forEach(p => addPlayerInPool(p))
   })
   
@@ -107,9 +106,10 @@ async function createCollapsibleChart(players: Array<Player>) {
   chartContainer.delete = () => details.remove()
   details.appendChild(chartContainer.div)
   //TODO : remove details when deleting chartContainer
-  details.classList.add("chart-container")
+  details.classList.add("chart-container", "m-2")
   details.setAttribute("open", "true")
   const chartSummary = document.createElement("summary")
+  chartSummary.classList.add("px-3", "py-2")
   chartSummary.textContent = chartContainer.title
   details.appendChild(chartSummary)
   document.getElementById("chartsDiv").appendChild(details)

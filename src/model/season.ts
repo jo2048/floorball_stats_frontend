@@ -1,10 +1,13 @@
 import { Config } from "../view/config.js";
+import { getOrFetchData } from "./cache.js";
 import { ClubRegistry } from "./club.js";
 import { Team } from "./team.js";
 
 
 class Season {
-  static _instances: Map<number, Season> = null;
+  private static seasonsCache: Map<number, Season> = null;
+  private static clubCache: Map<string, Array<Club>> = new Map();
+  private static teamCache: Map<string, Array<Team>> = new Map();
 
   readonly startDate: Date
   readonly endDate: Date
@@ -33,19 +36,16 @@ class Season {
   }
 
   static findSeasonByDate(date: Date) {
-    if (!this._instances)
-      throw new Error("This method cannot be called before initializing list of seasons")
-    return Array.from(this._instances.values()).find(s => s.startDate <= date && s.endDate > date)
+    if (!this.seasonsCache) throw new Error("Seasons not initiazed")
+    return Array.from(this.seasonsCache.values()).find(s => s.startDate <= date && s.endDate > date)
   }
 
-  static async getSeasonById(seasonId: number) {
-    if (this._instances === null) {
-      await this.fetchAllSeasons();
-    }
-    return this._instances.get(seasonId);
+  static getSeasonById(seasonId: number) {
+    if (!this.seasonsCache) throw new Error("Seasons not initiazed")
+    return this.seasonsCache.get(seasonId);
   }
 
-  static async fetchAllSeasons() {
+  static async init() {
     const url = Config.getInstance().baseUrl + "public_season_getall.php";
     try {
       const response = await fetch(url);
@@ -53,63 +53,57 @@ class Season {
         throw new Error(`Response status: ${response.status}`);
       }
       const json = await response.json();
-      this._instances = new Map(json.map((seasonData: any) => [seasonData.id, new Season(seasonData.id, seasonData.name)]))
+      this.seasonsCache = new Map(json.map((seasonData: any) => [seasonData.id, new Season(seasonData.id, seasonData.name)]))
     } catch (error: any) {
       console.error(error.message);
     }
+    // await Promise.all(Array.from(this._instances.values()).map(season => season.fetchClubs()))
   }
 
-  
-  static compare(s1: Season, s2: Season): number {
-    return s2.startDate.getTime() - s1.startDate.getTime()
+  static sortSeasons(seasons: Array<Season>): Array<Season> {
+    return seasons.toSorted((s1, s2) => s2.startDate.getTime() - s1.startDate.getTime())
   }
 
-  static async getSeasonsSorted(): Promise<Array<Season>> {
-    if (!this._instances) {
-      await this.fetchAllSeasons();
-    }
-    return Array.from(this._instances.values()).toSorted(this.compare)
+  static getSeasonsSorted(): Array<Season> {
+    if (!this.seasonsCache) throw new Error("Seasons not initiazed")
+    return this.sortSeasons(Array.from(this.seasonsCache.values()))
   }
 
-  static async getCurrentSeason(): Promise<Season> {
-    if (!this._instances) {
-      await this.fetchAllSeasons();
-    }   
+  static getCurrentSeason(): Season {
+    if (!this.seasonsCache) throw new Error("Seasons not initiazed")
     const currentDate = new Date(Date.now())
-    return Array.from(this._instances.values()).filter(s => s.startDate <= currentDate && s.endDate > currentDate)[0]
+    return Array.from(this.seasonsCache.values()).filter(s => s.startDate <= currentDate && s.endDate > currentDate)[0]
   }
 
-  async fetchClubs(): Promise<Array<Club>> {
-    if (this.clubs == null) {
-      const url = Config.getInstance().baseUrl + "public_clubs_getall.php";
-      const payload = { seasonid: this.id };
-      try {
-        const response = await fetch (url, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status} for clubs for season= ${this.id}`);
-        }
-        const json = await response.json();
-        delete json.logo
-        this.clubs = json.map((e: any) => ClubRegistry.getOrRegisterClub(e))
-      } catch (error: any) {
-        console.error(`Error: ${error.message}`);
-        return [];
+  static async #fetchClubs(seasonId: number): Promise<[number, Array<Club>]> {
+    const url = Config.getInstance().baseUrl + "public_clubs_getall.php";
+    const payload = { seasonid: seasonId };
+    try {
+      const response = await fetch (url, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+          throw new Error(`Response status: ${response.status} for clubs for season= ${seasonId}`);
       }
+      const json = await response.json();
+      return [200, json.map((e: any) => ClubRegistry.getOrRegisterClub(e))]
+    } catch (error: any) {
+      console.error(`Error: ${error.message}`);
+      return [500, null];
     }
-    return this.clubs
   }
 
-  static async fetchSeasonClubs(seasonId: number): Promise<Array<Club>> {
-    if (!seasonId)
-      throw new Error("Invalid argument to fetch clubs")
-    const season = await this.getSeasonById(seasonId)
-    return season.fetchClubs()
+  static async getClubsBySeason(seasonId: number): Promise<Array<Club>> {
+    if (!this.seasonsCache) throw new Error("Seasons not initiazed");
+    return await getOrFetchData(Season.clubCache, this.#fetchClubs, ""+seasonId)
   }
 
-  static async fetchTeamsBySeasonAndClub(seasonId: number, clubId: number): Promise<[number, Array<Team>]> {
+  static async getTeamsBySeasonAndClub(seasonId: number, clubId: number): Promise<Array<Team>> {
+    return await getOrFetchData(this.teamCache, this.#fetchTeamsBySeasonAndClub, ""+seasonId, ""+clubId)
+  }
+
+  static async #fetchTeamsBySeasonAndClub(seasonId: number, clubId: number): Promise<[number, Array<Team>]> {
     const url = Config.getInstance().baseUrl + "public_teams_byclubbyseason.php"
     const payload = { seasonid: seasonId, clubid: clubId };
     try {

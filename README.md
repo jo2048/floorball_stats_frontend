@@ -15,3 +15,6 @@ Hosted with cloudflare pages https://belgium-floorball-stats.pages.dev/
 
 
 This project does not follow any good practice (no unit test, etc.) and is only a side project i started with the goal to improve my skills and knowledge in web development.
+
+
+

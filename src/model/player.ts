@@ -6,9 +6,8 @@ class Player {
 
   readonly birthdate: Date;
 
-  constructor(readonly id: number, readonly name: string, birthdate: Date, public sex: string, public currentClubName: string) {
+  constructor(readonly id: number, readonly name: string, birthdate: Date, readonly sex: string, public currentClubId: number) {
     this.birthdate = new Date(birthdate);
-    this.currentClubName = currentClubName == "NO" ? "No club currently" : currentClubName
   }
 
   getAge() {
@@ -30,10 +29,10 @@ class Player {
         playerId,
         new Player(
           playerId,
-          playerData["name"],
+          playerData["name"], 
           playerData["birthdate"],
           playerData["sex"],
-          playerData["clubname"]
+          parseInt(playerData["clubid"])
         )
       );
     return this.cache.get(playerId);

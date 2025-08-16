@@ -4,6 +4,7 @@ import { Chart } from "chart.js";
 import { searchPlayerByName } from "../model/fetch_player_data.js"
 import { Player } from "../model/player";
 import { COLORS } from "./config.js";
+import { ClubRegistry } from "../model/club.js";
 
 function fillSelect(select: HTMLSelectElement, values: Array<any>) {
   select.querySelectorAll("option").forEach((e) => e.remove());
@@ -78,6 +79,12 @@ interface PlayerSelectionCard extends HTMLDivElement {
 
 function createPlayerSelectionCard(player: Player): PlayerSelectionCard {
   const template = document.createElement("template")
+  const club = ClubRegistry.getClubById(player.currentClubId)
+  const teamSpanStr = `<h6 class="mb-0">
+    <span class="badge px-3 py-2 text-secondary-emphasis border rounded-pill bg-warning-subtle">
+      ${club?.name}
+    </span>
+  </h6>`
   template.insertAdjacentHTML("beforeend", `<div 
     class="card bg-secondary-subtle rounded-5 scale-on-hover">
     <div class="card-body p-3 sm:p-6 pe-auto" role="button">
@@ -90,16 +97,14 @@ function createPlayerSelectionCard(player: Player): PlayerSelectionCard {
             ${player.getAge() > 100 ? "age unknown" : player.getAge() + " years old"}
           </span>
         </h6>
-        <h6 class="mb-0">
-          <span class="badge px-3 py-2 text-secondary-emphasis border rounded-pill bg-warning-subtle">
-            ${player.currentClubName}
-          </span>
-        </h6>
+        ${player.currentClubId ? teamSpanStr : ""}
       </div>
     </div>
   </div>
    `
   )
+  // <img with="28" height="28" class="rounded-pill" src=${club?.logo}>
+
   const card = template.firstElementChild as PlayerSelectionCard
 
   card.player = player

@@ -79,7 +79,7 @@ class CompareTeamsView {
           ${team.getNameFormatted()}
         </span>  
         <span class="vr mx-2"></span>
-        <div class="delete-link me-1" role="button" aria-label="Delete success"><i class="bi bi-x-circle-fill h5"></i></div>
+        <div class="delete-link me-1" role="button" aria-label="Delete success"><i class="bi bi-x-circle-fill h5 "></i></div>
       </span>`
     )
     const span = template.firstElementChild as TeamSpan
@@ -106,15 +106,17 @@ class CompareTeamsView {
     const teamSelect = this.container.querySelector("#team-select-view1") as HTMLSelectElement;
     const addTeamBtn = this.container.querySelector("#add-team-view1");
 
-    const currentSeason = await Season.getCurrentSeason();
-    const clubs = await Season.fetchSeasonClubs(currentSeason.id);
+    const currentSeason = Season.getCurrentSeason();
+    const clubs = await Season.getClubsBySeason(currentSeason.id);
+    console.log(clubs)
     fillSelect(clubSelect, clubs);
 
     clubSelect.addEventListener("change", async () => {
-      const [_, teams] = await Season.fetchTeamsBySeasonAndClub(
+      const teams = await Season.getTeamsBySeasonAndClub(
         currentSeason.id,
         parseInt(clubSelect.value)
       );
+      console.log(teams)
       fillSelect(teamSelect, teams);
     });
     clubSelect.dispatchEvent(new Event("change"));

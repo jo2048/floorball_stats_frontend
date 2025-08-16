@@ -15,7 +15,11 @@ canvas {
 }
 
 .scale-on-hover:hover {
-  transform: scale(1.07);
+  transform: scale(1.05);
+}
+
+.bi-x-circle-fill:hover {
+  color: #dc3545;
 }
 
 .lighter {
@@ -26,8 +30,8 @@ canvas {
 .chart-container {
   background-color: white;
   /* padding: 10px; */
-  padding: 0.5em 0.5em 0;
-  margin: 8px;
+  /* padding: 0.5em 0.5em 0;
+  margin: 8px; */
   border-radius: 10px;
   position: relative;
   border: solid 2px;
@@ -56,11 +60,11 @@ span {
 
 summary {
   font-weight: bold;
-  margin: -0.5em -0.5em 0;
-  padding: 0.5em;
+  /* margin: -0.5em -0.5em 0;
+  padding: 0.5em; */
 }
 
 details[open] summary {
   border-bottom: 1px solid #aaa;
-  margin-bottom: 0.5em;
+  /* margin-bottom: 0.5em; */
 }

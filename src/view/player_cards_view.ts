@@ -52,7 +52,7 @@ class PlayerCardsView {
         </div>
         <ul class="list-group list-group-flush">
           <li class="list-group-item">${player.getAge()} years old</li>
-          <li class="list-group-item bg-info-subtle">${player.currentClubName}</li>
+          <li class="list-group-item bg-info-subtle">${player.currentClubId}</li>
           <li class="list-group-item bg-secondary-subtle"">${stats.gamesPlayed} games played</li>
           <li class="list-group-item">First game played: ${sortedGames.length > 0 ? sortedGames[0].date.toLocaleDateString() : "Never played yet"}</li>
           <li class="list-group-item">Last game played: ${sortedGames.length > 0 ? sortedGames[sortedGames.length - 1].date.toLocaleDateString() : "Never played yet"}</li>
